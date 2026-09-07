@@ -1,0 +1,84 @@
+<script setup lang="ts">
+import InputError from '@/components/InputError.vue';
+import TextLink from '@/components/TextLink.vue';
+import { Button } from '@/components/ui/button';
+import Label from '@/components/ui/label/Label.vue';
+import InputWithIcon from '@/components/ui/inputWithIcon/InputWithIcon.vue';
+import IconUser from '@/components/icon/icon-user.vue';
+import IconMail from '@/components/icon/icon-mail.vue';
+import IconLockDots from '@/components/icon/icon-lock-dots.vue';
+import IconLoader from '@/components/icon/icon-loader.vue';
+import Checkbox from '@/components/ui/checkbox/Checkbox.vue';
+import { Head, useForm } from '@inertiajs/vue3';
+import AuthLayout from '@/layouts/AuthLayout.vue';
+const form = useForm({
+    name: '',
+    email: '',
+    password: '',
+    password_confirmation: '',
+    terms: false,
+});
+// persistent layout
+defineOptions({
+    layout:AuthLayout
+});
+const submit = () => {
+    form.post(route('register'), {
+        onFinish: () => form.reset('password', 'password_confirmation'),
+    });
+};
+</script>
+<template>
+
+    <Head title="Register" />
+    <form @submit.prevent="submit" class="space-y-5 dark:text-white">
+        <div>
+            <Label for="name" :isRequired="true">Name</Label>
+            <InputWithIcon v-model.trim="form.name" type="text" placeholder="Full name" autocomplete="name" required>
+                <IconUser :fill="true" />
+            </InputWithIcon>
+            <InputError :message="form.errors.name" />
+        </div>
+        <div>
+            <Label :isRequired="true">Email</Label>
+            <InputWithIcon v-model.trim="form.email" type="email" placeholder="email@example.com" autocomplete="email"
+                required>
+                <IconMail :fill="true" />
+            </InputWithIcon>
+            <InputError :message="form.errors.email" />
+        </div>
+        <div>
+            <Label :isRequired="true">Password</Label>
+            <InputWithIcon v-model.trim="form.password" type="password" placeholder="Password" required
+                autocomplete="new-password">
+                <IconLockDots :fill="true" />
+            </InputWithIcon>
+            <InputError :message="form.errors.password" />
+        </div>
+        <div>
+            <Label :isRequired="true">Confirm Password</Label>
+            <InputWithIcon v-model.trim="form.password_confirmation" type="password" placeholder="Confirm password"
+                required autocomplete="new-password">
+                <IconLockDots :fill="true" />
+            </InputWithIcon>
+            <InputError :message="form.errors.password_confirmation" />
+        </div>
+        <div>
+            <Checkbox v-model="form.terms" required>
+                <span class="text-white-dark">I agree to the <TextLink href="#">Terms of Service</TextLink></span>
+            </Checkbox>
+        </div>
+        <Button type="submit" :disabled="form.processing"
+            class="btn btn-gradient !mt-6 w-full border-0 uppercase shadow-[0_10px_20px_-10px_rgba(67,97,238,0.44)]">
+            <IconLoader v-if="form.processing"
+                class="animate-[spin_2s_linear_infinite] inline-block align-middle ltr:mr-2 rtl:ml-2 shrink-0" />
+            Sign UP
+        </Button>
+    </form>
+     <div class="text-center dark:text-white mt-5">
+        Already have an account?
+        <TextLink :href="route('login')"
+            class="underline uppercase transition text-primary hover:text-black dark:hover:text-white">Sign In
+        </TextLink>
+    </div>
+</template>
