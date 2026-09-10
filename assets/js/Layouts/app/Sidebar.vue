@@ -110,6 +110,8 @@ const menuItems: MenuItem[] = [
     //     children: [],
     // },
 ];
+console.log('Hello');
+
 const activeDropdown = ref('');
 watch(
     () => page.url,

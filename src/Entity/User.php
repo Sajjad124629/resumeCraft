@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\UserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
@@ -46,6 +48,27 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $facebookId = null;
+
+    #[ORM\OneToOne(mappedBy: 'user', cascade: ['persist', 'remove'])]
+    private ?CandidateProfile $candidateProfile = null;
+
+    /**
+     * @var Collection<int, CvLike>
+     */
+    #[ORM\OneToMany(targetEntity: CvLike::class, mappedBy: 'recruiter')]
+    private Collection $likes;
+
+    /**
+     * @var Collection<int, DiscussionPost>
+     */
+    #[ORM\OneToMany(targetEntity: DiscussionPost::class, mappedBy: 'author')]
+    private Collection $discussionPosts;
+
+    public function __construct()
+    {
+        $this->likes = new ArrayCollection();
+        $this->discussionPosts = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -178,6 +201,83 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setFacebookId(?string $facebookId): static
     {
         $this->facebookId = $facebookId;
+
+        return $this;
+    }
+
+    public function getCandidateProfile(): ?CandidateProfile
+    {
+        return $this->candidateProfile;
+    }
+
+    public function setCandidateProfile(CandidateProfile $candidateProfile): static
+    {
+        // set the owning side of the relation if necessary
+        if ($candidateProfile->getUser() !== $this) {
+            $candidateProfile->setUser($this);
+        }
+
+        $this->candidateProfile = $candidateProfile;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, CvLike>
+     */
+    public function getLikes(): Collection
+    {
+        return $this->likes;
+    }
+
+    public function addLike(CvLike $like): static
+    {
+        if (!$this->likes->contains($like)) {
+            $this->likes->add($like);
+            $like->setRecruiter($this);
+        }
+
+        return $this;
+    }
+
+    public function removeLike(CvLike $like): static
+    {
+        if ($this->likes->removeElement($like)) {
+            // set the owning side to null (unless already changed)
+            if ($like->getRecruiter() === $this) {
+                $like->setRecruiter(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, DiscussionPost>
+     */
+    public function getDiscussionPosts(): Collection
+    {
+        return $this->discussionPosts;
+    }
+
+    public function addDiscussionPost(DiscussionPost $discussionPost): static
+    {
+        if (!$this->discussionPosts->contains($discussionPost)) {
+            $this->discussionPosts->add($discussionPost);
+            $discussionPost->setAuthor($this);
+        }
+
+        return $this;
+    }
+
+    public function removeDiscussionPost(DiscussionPost $discussionPost): static
+    {
+        if ($this->discussionPosts->removeElement($discussionPost)) {
+            // set the owning side to null (unless already changed)
+            if ($discussionPost->getAuthor() === $this) {
+                $discussionPost->setAuthor(null);
+            }
+        }
 
         return $this;
     }

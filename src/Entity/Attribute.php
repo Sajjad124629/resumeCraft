@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\AttributeRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -29,6 +31,17 @@ class Attribute
     #[ORM\ManyToOne(inversedBy: 'attributes')]
     #[ORM\JoinColumn(nullable: false,onDelete:'CASCADE')]
     private ?AttributeCategory $category = null;
+
+    /**
+     * @var Collection<int, CandidateAttributeValue>
+     */
+    #[ORM\OneToMany(targetEntity: CandidateAttributeValue::class, mappedBy: 'attribute')]
+    private Collection $candidateValues;
+
+    public function __construct()
+    {
+        $this->candidateValues = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -91,6 +104,36 @@ class Attribute
     public function setCategory(?AttributeCategory $category): static
     {
         $this->category = $category;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, CandidateAttributeValue>
+     */
+    public function getCandidateValues(): Collection
+    {
+        return $this->candidateValues;
+    }
+
+    public function addCandidateValue(CandidateAttributeValue $candidateValue): static
+    {
+        if (!$this->candidateValues->contains($candidateValue)) {
+            $this->candidateValues->add($candidateValue);
+            $candidateValue->setAttribute($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCandidateValue(CandidateAttributeValue $candidateValue): static
+    {
+        if ($this->candidateValues->removeElement($candidateValue)) {
+            // set the owning side to null (unless already changed)
+            if ($candidateValue->getAttribute() === $this) {
+                $candidateValue->setAttribute(null);
+            }
+        }
 
         return $this;
     }
