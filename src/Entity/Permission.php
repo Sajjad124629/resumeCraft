@@ -6,6 +6,7 @@ use App\Repository\PermissionRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\String\Slugger\AsciiSlugger;
 
 #[ORM\Entity(repositoryClass: PermissionRepository::class)]
 class Permission
@@ -18,7 +19,7 @@ class Permission
     #[ORM\Column(length: 255)]
     private ?string $name = null;
 
-    #[ORM\Column(length: 100,unique: true)]
+    #[ORM\Column(length: 255, unique: true)]
     private ?string $slug = null;
 
     /**
@@ -46,6 +47,8 @@ class Permission
     {
         $this->name = $name;
 
+        $slugger = new AsciiSlugger();
+        $this->slug = $slugger->slug($name, '_')->lower()->toString();
         return $this;
     }
 
@@ -60,6 +63,7 @@ class Permission
 
         return $this;
     }
+
 
     /**
      * @return Collection<int, Role>

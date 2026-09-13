@@ -168,7 +168,7 @@ const search = ref(false);
                                         </TextLink>
                                     </li>
                                     <li class="border-t border-white-light dark:border-white-light/10">
-                                        <TextLink method="post" as="button" :href="route('dashboard')" @click="handleLogout"
+                                        <TextLink method="post" as="button" href="/logout" @click="handleLogout"
                                             class="text-danger !py-3 w-full text-left">
                                             <icon-logout class="w-4.5 h-4.5 ltr:mr-2 rtl:ml-2 rotate-90 shrink-0" />
                                             Sign Out

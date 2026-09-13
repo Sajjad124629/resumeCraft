@@ -22,11 +22,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 180)]
     private ?string $email = null;
 
-    /**
-     * @var list<string> The user roles
-     */
-    #[ORM\Column]
-    private array $roles = [];
+    #[ORM\ManyToOne(targetEntity: Role::class)]
+    private ?Role $role = null;
 
     /**
      * @var string The hashed password
@@ -36,9 +33,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column]
     private ?bool $isVerified = null;
-
-    #[ORM\Column]
-    private ?bool $isBlocked = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $photo = null;
@@ -63,6 +57,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[ORM\OneToMany(targetEntity: DiscussionPost::class, mappedBy: 'author')]
     private Collection $discussionPosts;
+
+    #[ORM\OneToOne(mappedBy: 'user', cascade: ['persist', 'remove'])]
+    private ?UserDetails $userDetails = null;
+
+    #[ORM\Column]
+    private ?bool $isBlock = false;
 
     public function __construct()
     {
@@ -102,19 +102,25 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     public function getRoles(): array
     {
-        $roles = $this->roles;
-        // guarantee every user at least has ROLE_USER
-        $roles[] = 'ROLE_USER';
+        $roles = ['ROLE_USER'];
+
+        if ($this->role) {
+            $roles[] = $this->role->getSlug();
+            foreach ($this->role->getPermissions() as $permission) {
+                $roles[] = $permission->getSlug();
+            }
+        }
 
         return array_unique($roles);
     }
 
-    /**
-     * @param list<string> $roles
-     */
-    public function setRoles(array $roles): static
+    public function getRole(): ?Role
     {
-        $this->roles = $roles;
+        return $this->role;
+    }
+    public function setRole(?Role $role): static
+    {
+        $this->role = $role;
 
         return $this;
     }
@@ -140,7 +146,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function __serialize(): array
     {
         $data = (array) $this;
-        $data["\0".self::class."\0password"] = hash('crc32c', $this->password);
+        $data["\0" . self::class . "\0password"] = hash('crc32c', $this->password);
 
         return $data;
     }
@@ -157,17 +163,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function isBlocked(): ?bool
-    {
-        return $this->isBlocked;
-    }
-
-    public function setIsBlocked(bool $isBlocked): static
-    {
-        $this->isBlocked = $isBlocked;
-
-        return $this;
-    }
 
     public function getPhoto(): ?string
     {
@@ -282,5 +277,32 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    public function getUserDetails(): ?UserDetails
+    {
+        return $this->userDetails;
+    }
 
+    public function setUserDetails(UserDetails $userDetails): static
+    {
+        // set the owning side of the relation if necessary
+        if ($userDetails->getUser() !== $this) {
+            $userDetails->setUser($this);
+        }
+
+        $this->userDetails = $userDetails;
+
+        return $this;
+    }
+
+    public function isBlock(): ?bool
+    {
+        return $this->isBlock;
+    }
+
+    public function setIsBlock(bool $isBlock): static
+    {
+        $this->isBlock = $isBlock;
+
+        return $this;
+    }
 }

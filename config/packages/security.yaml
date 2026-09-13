@@ -1,9 +1,10 @@
 security:
+    role_hierarchy:
+        ROLE_ADMIN: [ROLE_RECRUITER, ROLE_CANDIDATE]
     password_hashers:
         Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
 
     providers:
-        # used to reload user from session & other features (e.g. switch_user)
         app_user_provider:
             entity:
                 class: App\Entity\User
@@ -16,9 +17,30 @@ security:
         main:
             lazy: true
             provider: app_user_provider
+            user_checker: App\Security\UserChecker
+            form_login:
+                login_path: app_login
+                check_path: app_login
+                username_parameter: email
+                password_parameter: password
+                enable_csrf: false
+                default_target_path: app_dashboard
+            custom_authenticator:
+                - App\Security\GoogleAuthenticator
+                - App\Security\FacebookAuthenticator
+            entry_point: form_login
+            logout:
+                path: app_logout
+                target: app_dashboard
+
 
     access_control:
-        # public SPA application
+        - { path: ^/profile/public, roles: PUBLIC_ACCESS }
+        - { path: ^/admin, roles: ROLE_ADMIN }
+        - { path: ^/dashboard, roles: ROLE_USER }
+        - { path: ^/profile, roles: ROLE_CANDIDATE }
+        - { path: ^/positions/manage, roles: ROLE_RECRUITER }
+        - { path: ^/attributes, roles: ROLE_RECRUITER }
 
 when@test:
     security:

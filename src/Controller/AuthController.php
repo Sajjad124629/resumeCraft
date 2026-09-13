@@ -7,24 +7,27 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 
 class AuthController extends AbstractController
 {
-    #[Route('/login', name: 'login', methods: ['GET', 'POST'])]
-    public function login(Request $request, InertiaService $inertia): Response
+    #[Route('/login', name: 'app_login', methods: ['GET', 'POST'])]
+    public function login(AuthenticationUtils $authenticationUtils, InertiaService $inertia): Response
     {
-        if ($request->isMethod('POST')) {
-            // Placeholder post logic: redirect to dashboard
-            return $this->redirectToRoute('dashboard');
+        if ($this->getUser()) {
+            return $this->redirectToRoute('app_dashboard');
         }
-
+        $error =$authenticationUtils->getLastAuthenticationError();
+        $lastUsername = $authenticationUtils->getLastUsername();
         return $inertia->render('auth/Login', [
+            'lastUsername' => $lastUsername,
+            'error' => $error ? $error->getMessage() : null,
             'canResetPassword' => true,
             'status' => null,
         ]);
     }
 
-    #[Route('/register', name: 'register', methods: ['GET', 'POST'])]
+    #[Route('/register', name: 'app_register', methods: ['GET', 'POST'])]
     public function register(Request $request, InertiaService $inertia): Response
     {
         if ($request->isMethod('POST')) {
@@ -41,9 +44,9 @@ class AuthController extends AbstractController
         return $inertia->render('auth/ForgotPassword');
     }
 
-    #[Route('/logout', name: 'logout', methods: ['POST'])]
+    #[Route('/logout', name: 'app_logout', methods: ['POST'])]
     public function logout(): Response
     {
-        return $this->redirectToRoute('login');
+       throw new \LogicException('This method can be blank - it will be intercepted by the logout key on your firewall.');
     }
 }

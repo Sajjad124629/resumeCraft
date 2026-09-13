@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import InputError from '@/components/InputError.vue';
-import TextLink from '@/components/TextLink.vue';
-import { Button } from '@/components/ui/button';
-import Label from '@/components/ui/label/Label.vue';
-import InputWithIcon from '@/components/ui/inputWithIcon/InputWithIcon.vue';
-import IconUser from '@/components/icon/icon-user.vue';
-import IconMail from '@/components/icon/icon-mail.vue';
-import IconLockDots from '@/components/icon/icon-lock-dots.vue';
-import IconLoader from '@/components/icon/icon-loader.vue';
-import Checkbox from '@/components/ui/checkbox/Checkbox.vue';
+import InputError from '@/Components/InputError.vue';
+import TextLink from '@/Components/TextLink.vue';
+import { Button } from '@/Components/ui/button';
+import Label from '@/Components/ui/label/Label.vue';
+import InputWithIcon from '@/Components/ui/inputWithIcon/InputWithIcon.vue';
+import IconUser from '@/Components/icon/icon-user.vue';
+import IconMail from '@/Components/icon/icon-mail.vue';
+import IconLockDots from '@/Components/icon/icon-lock-dots.vue';
+import IconLoader from '@/Components/icon/icon-loader.vue';
+import Checkbox from '@/Components/ui/checkbox/Checkbox.vue';
 import { Head, useForm } from '@inertiajs/vue3';
-import AuthLayout from '@/layouts/AuthLayout.vue';
+import AuthLayout from '@/Layouts/AuthLayout.vue';
 const form = useForm({
     name: '',
     email: '',
@@ -23,7 +23,7 @@ defineOptions({
     layout:AuthLayout
 });
 const submit = () => {
-    form.post(route('register'), {
+    form.post(route('app_register'), {
         onFinish: () => form.reset('password', 'password_confirmation'),
     });
 };
@@ -77,7 +77,7 @@ const submit = () => {
     </form>
      <div class="text-center dark:text-white mt-5">
         Already have an account?
-        <TextLink :href="route('login')"
+        <TextLink :href="route('app_login')"
             class="underline uppercase transition text-primary hover:text-black dark:hover:text-white">Sign In
         </TextLink>
     </div>

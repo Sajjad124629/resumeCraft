@@ -29,7 +29,8 @@ defineOptions({
 });
 
 const submit = () => {
-    form.post(route('login'), {
+    form.post('/login', {
+        forceFormData:true,
         onFinish: () => form.reset('password'),
     });
 };
@@ -67,7 +68,7 @@ const submit = () => {
     </form>
     <div class="text-center dark:text-white mt-5">
        {{ __("Don't have an account ?") }}
-        <TextLink :href="route('register')"
+        <TextLink :href="route('app_register')"
             class="underline uppercase transition text-primary hover:text-black dark:hover:text-white">{{ __('Sign Up') }}
         </TextLink>
     </div>
