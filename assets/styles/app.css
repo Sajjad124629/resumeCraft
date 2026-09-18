@@ -1,0 +1,4 @@
+@import 'vue-select/dist/vue-select.css';
+@import '@bhplugin/vue3-datatable/dist/style.css';
+@import 'tw-animate-css';
+@import './tailwind.css';

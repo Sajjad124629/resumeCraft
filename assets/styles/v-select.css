@@ -1,0 +1,26 @@
+.vs__dropdown-toggle{
+    @apply w-full rounded-md border border-[#e0e6ed] bg-white px-2 py-1 text-sm font-semibold text-black  !outline-none focus:border-primary focus:ring-transparent dark:border-[#17263c] dark:bg-[#121e32] dark:text-white-dark dark:focus:border-primary;
+}
+.customSelectStyle::placeholder{
+    @apply  !mb-2 !pl-0 text-white-dark text-sm ;
+}
+
+.vs__selected{
+    @apply text-black dark:text-white-dark;
+}
+.vs__dropdown-menu{
+    @apply bg-white dark:bg-[#1b2e4b];
+}
+
+.vs__dropdown-menu li{
+    @apply py-3;
+}
+.vs__dropdown-menu li:hover{
+    @apply !bg-[#f6f6f6] dark:!bg-[#132136] !text-inherit;
+}
+.vs__dropdown-menu li.vs__dropdown-option--highlight{
+    @apply  text-black dark:text-white-dark !bg-[#f6f6f6] dark:!bg-[#132136] !text-inherit;
+}
+.vs__dropdown-menu li.vs__dropdown-option--selected{
+    @apply  text-black font-bold dark:text-white-dark !bg-[#f6f6f6] dark:!bg-[#132136] !text-inherit;
+}

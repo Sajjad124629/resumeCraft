@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: movie-showcase-spa
+    runtime: docker
+    plan: free
+    region: singapore
+    envVars:
+      - key: APP_ENV
+        value: prod
+      - key: APP_SECRET
+        generateValue: true
