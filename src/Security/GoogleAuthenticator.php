@@ -106,7 +106,13 @@ class GoogleAuthenticator extends OAuth2Authenticator implements AuthenticationE
     public function onAuthenticationFailure(Request $request, AuthenticationException $exception): ?Response
     {
         $message = strtr($exception->getMessageKey(), $exception->getMessageData());
-        return new Response($message, Response::HTTP_FORBIDDEN);
+        if ($request->hasSession()) {
+            $session = $request->getSession();
+            if ($session instanceof \Symfony\Component\HttpFoundation\Session\FlashBagAwareSessionInterface) {
+                $session->getFlashBag()->add('error', $message);
+            }
+        }
+        return new RedirectResponse($this->router->generate('app_login'));
     }
 
     public function start(Request $request, AuthenticationException $authException = null): Response

@@ -51,15 +51,32 @@ class FacebookAuthenticator extends OAuth2Authenticator implements Authenticatio
                 /** @var FacebookUser $facebookUser */
                 $facebookUser = $client->fetchUserFromToken($accessToken);
 
-                $email = $facebookUser->getEmail();
-                $existingUser = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $email]);
+                $facebookId = (string) $facebookUser->getId();
+                $email = $facebookUser->getEmail() ?? ($facebookId . '@facebook.com');
+
+                $existingUser = null;
+                if ($facebookId) {
+                    $existingUser = $this->entityManager->getRepository(User::class)->findOneBy(['facebookId' => $facebookId]);
+                }
+                if (!$existingUser && $email) {
+                    $existingUser = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $email]);
+                }
 
                 if ($existingUser) {
+                    if (!$existingUser->getFacebookId()) {
+                        $existingUser->setFacebookId($facebookId);
+                    }
+                    if (!$existingUser->isVerified()) {
+                        $existingUser->setIsVerified(true);
+                    }
+                    $this->entityManager->flush();
                     return $existingUser;
                 }
 
                 $user = new User();
                 $user->setEmail($email);
+                $user->setFacebookId($facebookId);
+                $user->setIsVerified(true);
 
                 // Random password since they use Facebook, properly hashed
                 $randomPassword = bin2hex(random_bytes(16));
@@ -97,7 +114,13 @@ class FacebookAuthenticator extends OAuth2Authenticator implements Authenticatio
     public function onAuthenticationFailure(Request $request, AuthenticationException $exception): ?Response
     {
         $message = strtr($exception->getMessageKey(), $exception->getMessageData());
-        return new Response($message, Response::HTTP_FORBIDDEN);
+        if ($request->hasSession()) {
+            $session = $request->getSession();
+            if ($session instanceof \Symfony\Component\HttpFoundation\Session\FlashBagAwareSessionInterface) {
+                $session->getFlashBag()->add('error', $message);
+            }
+        }
+        return new RedirectResponse($this->router->generate('app_login'));
     }
 
     public function start(Request $request, AuthenticationException $authException = null): Response

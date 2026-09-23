@@ -76,23 +76,26 @@ class InertiaService
 
         $flashProp = [];
         if ($request && $request->hasSession()) {
-            $flashBag = $request->getSession()->getFlashBag();
-            $allFlashes = $flashBag->all();
-            if (!empty($allFlashes)) {
-                foreach ($allFlashes as $type => $messages) {
-                    $msg = is_array($messages) ? implode("\n", $messages) : (string)$messages;
-                    $alertType = match ($type) {
-                        'error', 'danger' => 'error',
-                        'success' => 'success',
-                        'warning' => 'warning',
-                        default => 'info',
-                    };
-                    $flashProp = [
-                        'message' => $msg,
-                        'alertType' => $alertType,
-                        'all' => $allFlashes,
-                    ];
-                    break;
+            $session = $request->getSession();
+            if ($session instanceof \Symfony\Component\HttpFoundation\Session\FlashBagAwareSessionInterface) {
+                $flashBag = $session->getFlashBag();
+                $allFlashes = $flashBag->all();
+                if (!empty($allFlashes)) {
+                    foreach ($allFlashes as $type => $messages) {
+                        $msg = is_array($messages) ? implode("\n", $messages) : (string)$messages;
+                        $alertType = match ($type) {
+                            'error', 'danger' => 'error',
+                            'success' => 'success',
+                            'warning' => 'warning',
+                            default => 'info',
+                        };
+                        $flashProp = [
+                            'message' => $msg,
+                            'alertType' => $alertType,
+                            'all' => $allFlashes,
+                        ];
+                        break;
+                    }
                 }
             }
         }
@@ -124,14 +127,21 @@ class InertiaService
         ];
 
         if ($request->headers->get('X-Inertia')) {
-            return new JsonResponse($page, 200, ['X-Inertia' => 'true']);
+            $response = new JsonResponse($page, 200, [
+                'X-Inertia' => 'true',
+                'Vary' => 'X-Inertia',
+            ]);
+            $response->headers->set('Cache-Control', 'no-cache, private');
+            return $response;
         }
 
         $html = $this->twig->render($this->rootView, [
             'page' => $page,
         ]);
 
-        return new Response($html);
+        $response = new Response($html);
+        $response->headers->set('Vary', 'X-Inertia');
+        return $response;
     }
 
     private function getTranslations(string $locale): array
