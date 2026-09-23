@@ -22,7 +22,7 @@ const form = useForm({
 });
 // persistent layout
 defineOptions({
-    layout:AuthLayout
+    layout: AuthLayout
 });
 const submit = () => {
     form.post('/register', {
@@ -71,33 +71,37 @@ const submit = () => {
             </Checkbox>
         </div>
         <Button type="submit" :disabled="form.processing"
-            class="btn btn-gradient !mt-6 w-full border-0 uppercase shadow-[0_10px_20px_-10px_rgba(67,97,238,0.44)]">
+            class="btn !mt-6 w-full border-0 uppercase font-bold text-white bg-gradient-to-r from-[#e1147b] via-[#9c27b0] to-[#601bf9] hover:opacity-95 shadow-[0_10px_20px_-10px_rgba(225,20,123,0.5)] py-3 rounded-lg transition duration-200">
             <IconLoader v-if="form.processing"
                 class="animate-[spin_2s_linear_infinite] inline-block align-middle ltr:mr-2 rtl:ml-2 shrink-0" />
-            Sign UP
+            {{ __('SIGN UP') }}
         </Button>
 
-        <div class="relative my-7 text-center md:mb-9">
-            <span class="absolute inset-x-0 top-1/2 h-px w-full -translate-y-1/2 bg-white-light dark:bg-white-dark"></span>
-            <span class="relative bg-white px-2 font-bold uppercase text-white-dark dark:bg-dark dark:text-white-light"><span>OR</span></span>
+        <div class="relative my-7 text-center">
+            <span class="absolute inset-x-0 top-1/2 h-px w-full -translate-y-1/2 bg-gray-200 dark:bg-gray-700"></span>
+            <span
+                class="relative bg-white dark:bg-[#0e1726] px-3 font-semibold text-xs text-gray-400 dark:text-gray-400 uppercase tracking-widest">OR</span>
         </div>
 
-        <div class="mb-10 space-y-4">
-            <a href="/connect/google" class="btn btn-outline-dark w-full flex justify-center items-center gap-2 rounded-md border border-gray-300 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition">
-                <icon-google class="w-5 h-5" />
-                <span class="font-semibold">{{ __('Sign up with Google') }}</span>
+        <div class="flex items-center justify-center gap-4 my-6">
+            <a href="/connect/facebook"
+                class="w-11 h-11 rounded-full flex items-center justify-center bg-gradient-to-tr from-[#9c27b0] via-[#e1147b] to-[#601bf9] text-white shadow-md hover:scale-110 hover:shadow-lg transition-all duration-200"
+                title="Facebook">
+                <icon-facebook class="w-5 h-5 text-white" />
             </a>
 
-            <a href="/connect/facebook" class="btn btn-outline-dark w-full flex justify-center items-center gap-2 rounded-md border border-gray-300 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition">
-                <icon-facebook class="w-5 h-5 text-blue-600" />
-                <span class="font-semibold">{{ __('Sign up with Facebook') }}</span>
+            <a href="/connect/google"
+                class="w-11 h-11 rounded-full flex items-center justify-center bg-gradient-to-tr from-[#9c27b0] via-[#e1147b] to-[#601bf9] text-white shadow-md hover:scale-110 hover:shadow-lg transition-all duration-200"
+                title="Google">
+                <icon-google class="w-5 h-5 text-white" />
             </a>
         </div>
     </form>
-     <div class="text-center dark:text-white mt-5">
-        Already have an account?
+    <div class="text-center dark:text-white mt-6 text-sm">
+        {{ __("Already have an account?") }}
         <TextLink href="/login"
-            class="underline uppercase transition text-primary hover:text-black dark:hover:text-white">Sign In
+            class="font-bold uppercase transition text-[#7c3aed] hover:text-[#e1147b] dark:text-[#a855f7] ml-1">{{
+                __('SIGN IN') }}
         </TextLink>
     </div>
 </template>
