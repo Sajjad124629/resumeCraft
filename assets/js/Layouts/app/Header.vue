@@ -15,6 +15,7 @@ import IconLogout from '@/Components/icon/icon-logout.vue';
 import { router, usePage } from '@inertiajs/vue3';
 import { Settings } from '@/types';
 import { computed, inject } from 'vue';
+import { route } from '@/route';
 const store = useAppStore();
 const page = usePage();
 const __ = inject<any>('__', (key: string) => key);
@@ -38,7 +39,7 @@ const currentLanguage = computed(() => {
 
 function switchLocale(code: string, closeDropdown?: () => void) {
     if (closeDropdown) closeDropdown();
-    router.post(`/locale/${code}`, {}, {
+    router.post(route('app_locale_switch', { code }), {}, {
         preserveScroll: true,
         preserveState: false,
     });
@@ -56,7 +57,7 @@ const searchQuery = ref(new URLSearchParams(window.location.search).get('q') || 
 
 function submitSearch() {
     if (searchQuery.value.trim()) {
-        router.visit(`/search?q=${encodeURIComponent(searchQuery.value.trim())}`);
+        router.visit(route('app_search', { q: searchQuery.value.trim() }));
     }
 }
 
@@ -85,7 +86,7 @@ const onAvatarError = (e: Event) => {
             class="backdrop-blur-md bg-white/85 dark:bg-[#0e1726]/85 border-b border-gray-200/60 dark:border-gray-800/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06)] transition-all">
             <div class="relative flex w-full items-center px-5 py-2.5">
                 <div class="horizontal-logo flex lg:hidden justify-between items-center ltr:mr-2 rtl:ml-2">
-                    <TextLink href="/dashboard" class="main-logo flex items-center shrink-0">
+                    <TextLink :href="route('app_dashboard')" class="main-logo flex items-center shrink-0">
                         <img class="w-8 ltr:-ml-1 rtl:-mr-1 inline"
                             :src="settings?.logo ? '/storage/' + settings.logo : '/assets/images/logo.svg'"
                             :alt="settings?.title || 'VR'" />
@@ -217,7 +218,7 @@ const onAvatarError = (e: Event) => {
                                         </div>
                                     </li>
                                     <li v-if="user?.candidateProfileId">
-                                        <TextLink href="/profile"
+                                        <TextLink :href="route('app_profile_index')"
                                             class="dark:hover:text-white flex items-center px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-700/40"
                                             @click="close()">
                                             <icon-user
@@ -226,7 +227,7 @@ const onAvatarError = (e: Event) => {
                                         </TextLink>
                                     </li>
                                     <li v-if="user?.roles?.includes('ROLE_ADMIN')">
-                                        <TextLink href="/admin/users"
+                                        <TextLink :href="route('app_admin_users')"
                                             class="dark:hover:text-white flex items-center px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-700/40"
                                             @click="close()">
                                             <icon-user
@@ -235,7 +236,7 @@ const onAvatarError = (e: Event) => {
                                         </TextLink>
                                     </li>
                                     <li class="border-t border-gray-100 dark:border-gray-700/60">
-                                        <TextLink method="post" as="button" href="/logout"
+                                        <TextLink method="post" as="button" :href="route('app_logout')"
                                             class="text-danger flex items-center px-4 py-2.5 w-full text-left text-sm hover:bg-red-50 dark:hover:bg-red-900/20 transition">
                                             <icon-logout class="w-4.5 h-4.5 ltr:mr-2.5 rtl:ml-2.5 rotate-90 shrink-0" />
                                             {{ __('Sign Out') }}
@@ -248,10 +249,10 @@ const onAvatarError = (e: Event) => {
 
                     <!-- Guest login buttons if unauthenticated -->
                     <div v-else class="flex items-center gap-2">
-                        <TextLink href="/login" class="btn btn-outline-primary btn-sm text-xs px-3 py-1.5 rounded-lg">
+                        <TextLink :href="route('app_login')" class="btn btn-outline-primary btn-sm text-xs px-3 py-1.5 rounded-lg">
                             {{ __('Log In') }}
                         </TextLink>
-                        <TextLink href="/register" class="btn btn-primary btn-sm text-xs px-3 py-1.5 rounded-lg">
+                        <TextLink :href="route('app_register')" class="btn btn-primary btn-sm text-xs px-3 py-1.5 rounded-lg">
                             {{ __('Sign Up') }}
                         </TextLink>
                     </div>

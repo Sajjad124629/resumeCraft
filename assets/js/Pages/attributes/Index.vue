@@ -6,6 +6,7 @@ import Vue3Datatable from '@bhplugin/vue3-datatable';
 import { Button } from '@/Components/ui/button';
 import TextLink from '@/Components/TextLink.vue';
 import { HugeiconsIcon } from '@hugeicons/vue';
+import { route } from '@/route';
 import { 
     PlusSignIcon, 
     PencilEdit02Icon, 
@@ -39,7 +40,7 @@ let searchTimer: any = null;
 
 const fetchServerData = (page: number, limit: number, search: string, sort: string, dir: string) => {
     loading.value = true;
-    router.get('/attributes', {
+    router.get(route('app_attribute_index'), {
         page,
         limit,
         search: search || '',
@@ -98,7 +99,7 @@ function getSelectedAttributeId(): number | null {
 function editAttribute() {
     const id = getSelectedAttributeId();
     if (id) {
-        router.visit(`/attributes/${id}/edit`);
+        router.visit(route('app_attribute_edit_view', { id }));
     }
 }
 
@@ -109,7 +110,7 @@ function deleteAttributes() {
         selectedRows.value.forEach((row: any) => {
             const id = row?.id ?? (typeof row === 'number' ? row : null);
             if (id) {
-                router.delete(`/attributes/${id}`);
+                router.delete(route('app_attribute_delete', { id }));
             }
         });
         selectedRows.value = [];
@@ -120,7 +121,7 @@ function deleteAttributes() {
 function onRowDBClick(row: any) {
     const id = row?.id ?? (typeof row === 'number' ? row : null);
     if (id) {
-        router.visit(`/attributes/${id}/edit`);
+        router.visit(route('app_attribute_edit_view', { id }));
     }
 }
 </script>

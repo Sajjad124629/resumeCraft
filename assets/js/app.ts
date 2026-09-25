@@ -15,7 +15,7 @@ import Popper from 'vue3-popper';
 import { PerfectScrollbarPlugin } from 'vue3-perfect-scrollbar';
 import 'vue3-perfect-scrollbar/style.css';
 import 'animate.css';
-import { route } from './route';
+import { route, setCachedRoutes } from './route';
 
 const appName = window.document.getElementsByTagName('title')[0]?.innerText || 'Symfony App';
 
@@ -29,6 +29,9 @@ const updateTranslations = (pageProps: any) => {
     }
     if (pageProps?.locale) {
         currentLocale.value = pageProps.locale;
+    }
+    if (pageProps?.routes && typeof pageProps.routes === 'object') {
+        setCachedRoutes(pageProps.routes);
     }
 };
 

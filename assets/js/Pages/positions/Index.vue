@@ -3,6 +3,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import { Head, router, Link } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import Vue3Datatable from '@bhplugin/vue3-datatable';
+import { route } from '@/route';
 
 import { Button } from '@/Components/ui/button';
 import TextLink from '@/Components/TextLink.vue';
@@ -42,7 +43,7 @@ let searchTimer: any = null;
 
 const fetchServerData = (page: number, limit: number, search: string, sort: string, dir: string) => {
     loading.value = true;
-    router.get('/positions', {
+    router.get(route('app_position_index'), {
         page,
         limit,
         search: search || '',
@@ -102,21 +103,21 @@ function getSelectedPositionId(): number | null {
 function viewPosition() {
     const id = getSelectedPositionId();
     if (id) {
-        router.visit(`/positions/${id}`);
+        router.visit(route('app_position_show', { id }));
     }
 }
 
 function editPosition() {
     const id = getSelectedPositionId();
     if (id) {
-        router.visit(`/positions/${id}/edit`);
+        router.visit(route('app_position_edit_view', { id }));
     }
 }
 
 function duplicatePosition() {
     const id = getSelectedPositionId();
     if (!id) return;
-    router.post(`/positions/${id}/duplicate`, {}, {
+    router.post(route('app_position_duplicate', { id }), {}, {
         onSuccess: () => {
             selectedRows.value = [];
             datatableRef.value?.clearSelectedRows();
@@ -131,7 +132,7 @@ function deletePositions() {
         selectedRows.value.forEach((row: any) => {
             const id = row?.id ?? (typeof row === 'number' ? row : null);
             if (id) {
-                router.delete(`/positions/${id}`);
+                router.delete(route('app_position_delete', { id }));
             }
         });
         selectedRows.value = [];
@@ -142,7 +143,7 @@ function deletePositions() {
 function onRowDBClick(row: any) {
     const id = row?.id ?? (typeof row === 'number' ? row : null);
     if (id) {
-        router.visit(`/positions/${id}`);
+        router.visit(route('app_position_show', { id }));
     }
 }
 
@@ -234,7 +235,7 @@ const isRecruiter = () => {
                     :noDataContent="__('No positions found.')" @change="onServerChange" @rowSelect="onRowSelect"
                     @rowDBClick="onRowDBClick">
                     <template #title="data">
-                        <Link :href="`/positions/${data.value.id}`"
+                        <Link :href="route('app_position_show', { id: data.value.id })"
                             class="font-bold text-gray-900 dark:text-gray-100 hover:text-primary transition inline-flex items-center gap-1.5">
                             {{ data.value.title }}
                         </Link>

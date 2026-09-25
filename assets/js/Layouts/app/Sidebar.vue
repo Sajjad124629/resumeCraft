@@ -74,29 +74,29 @@ const menuItems = computed<MenuItem[]>(() => {
         {
             title: 'Dashboard',
             icon: DashboardSquare03Icon,
-            route: '/dashboard',
+            route: route('app_dashboard'),
         },
         {
             title: 'Positions',
             icon: Briefcase08Icon,
-            route: '/positions',
+            route: route('app_position_index'),
         },
         {
             title: 'Attribute Library',
             icon: TagsIcon,
-            route: '/attributes',
+            route: route('app_attribute_index'),
             roles: ['ROLE_RECRUITER']
         },
         {
             title: 'My Profile',
             icon: UserAccountIcon,
-            route: '/profile',
+            route: route('app_profile_index'),
             candidateOnly: true,
         },
         {
             title: 'User Management',
             icon: UserMultiple02Icon,
-            route: '/admin/users',
+            route: route('app_admin_users'),
             adminOnly: true,
         },
     ].filter(item => {
@@ -146,7 +146,7 @@ const toggleMobileMenu = () => {
             <div class="bg-white dark:bg-[#0e1726] h-full flex flex-col">
                 <div
                     class="flex justify-between items-center px-4 py-3.5 border-b border-gray-100 dark:border-gray-800/60">
-                    <TextLink href="/dashboard" class="main-logo flex items-center shrink-0 group">
+                    <TextLink :href="route('app_dashboard')" class="main-logo flex items-center shrink-0 group">
                         <div
                             class="p-1 rounded-xl bg-gradient-to-tr from-primary/20 to-blue-400/20 border border-primary/30 shadow-xs group-hover:scale-105 transition-transform duration-200">
                             <img class="w-7 h-7 object-contain"

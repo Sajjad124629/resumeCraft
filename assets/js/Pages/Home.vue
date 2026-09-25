@@ -25,14 +25,14 @@ defineProps<{
             </div>
             
             <div class="flex gap-4 items-center">
-                <Link href="/positions" class="text-sm font-semibold text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition">Browse Positions</Link>
-                <Link href="/search" class="text-sm font-semibold text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition">Search</Link>
+                <Link :href="route('app_position_index')" class="text-sm font-semibold text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition">Browse Positions</Link>
+                <Link :href="route('app_search')" class="text-sm font-semibold text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition">Search</Link>
                 <template v-if="auth?.user">
-                    <Link href="/dashboard" class="text-sm font-semibold text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition">{{ __('Dashboard') }}</Link>
+                    <Link :href="route('app_dashboard')" class="text-sm font-semibold text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition">{{ __('Dashboard') }}</Link>
                 </template>
                 <template v-else>
-                    <Link href="/login" class="text-sm font-semibold text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition">{{ __('Log In') }}</Link>
-                    <Link href="/register" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-full text-sm font-semibold transition shadow-lg shadow-blue-500/30">{{ __('Sign Up') }}</Link>
+                    <Link :href="route('app_login')" class="text-sm font-semibold text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition">{{ __('Log In') }}</Link>
+                    <Link :href="route('app_register')" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-full text-sm font-semibold transition shadow-lg shadow-blue-500/30">{{ __('Sign Up') }}</Link>
                 </template>
             </div>
         </nav>
@@ -53,11 +53,11 @@ defineProps<{
                 </p>
 
                 <div class="flex flex-col sm:flex-row justify-center gap-4 mt-8">
-                    <Link href="/register" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-full text-lg font-bold transition shadow-xl shadow-blue-500/30 flex items-center justify-center gap-2">
+                    <Link :href="route('app_register')" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-full text-lg font-bold transition shadow-xl shadow-blue-500/30 flex items-center justify-center gap-2">
                         Get Started
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
                     </Link>
-                    <Link href="/positions" class="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 px-8 py-3.5 rounded-full text-lg font-bold transition flex items-center justify-center">
+                    <Link :href="route('app_position_index')" class="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 px-8 py-3.5 rounded-full text-lg font-bold transition flex items-center justify-center">
                         Browse Positions
                     </Link>
                 </div>
@@ -127,7 +127,7 @@ defineProps<{
                             <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
                                 <span class="w-3 h-3 rounded-full bg-blue-500"></span> Latest Positions
                             </h3>
-                            <Link href="/positions" class="text-xs text-blue-600 hover:underline">View all &rarr;</Link>
+                            <Link :href="route('app_position_index')" class="text-xs text-blue-600 hover:underline">View all &rarr;</Link>
                         </div>
                         <div class="table-responsive">
                             <table class="w-full text-left table-auto border-collapse text-sm">
@@ -141,7 +141,7 @@ defineProps<{
                                 <tbody>
                                     <tr v-for="pos in latestPositions" :key="pos.id" class="border-b border-gray-100 dark:border-gray-700/40 hover:bg-gray-50 dark:hover:bg-gray-800/50">
                                         <td class="py-2.5 font-medium">
-                                            <Link :href="`/positions/${pos.id}`" class="text-blue-600 dark:text-blue-400 hover:underline">
+                                            <Link :href="route('app_position_show', { id: pos.id })" class="text-blue-600 dark:text-blue-400 hover:underline">
                                                 {{ pos.title }}
                                             </Link>
                                         </td>
@@ -164,7 +164,7 @@ defineProps<{
                             <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
                                 <span class="w-3 h-3 rounded-full bg-orange-500"></span> Most Popular Positions
                             </h3>
-                            <Link href="/positions" class="text-xs text-blue-600 hover:underline">View all &rarr;</Link>
+                            <Link :href="route('app_position_index')" class="text-xs text-blue-600 hover:underline">View all &rarr;</Link>
                         </div>
                         <div class="table-responsive">
                             <table class="w-full text-left table-auto border-collapse text-sm">
@@ -180,7 +180,7 @@ defineProps<{
                                     <tr v-for="(pos, idx) in popularPositions" :key="pos.id" class="border-b border-gray-100 dark:border-gray-700/40 hover:bg-gray-50 dark:hover:bg-gray-800/50">
                                         <td class="py-2.5 text-xs font-bold text-gray-400">#{{ idx + 1 }}</td>
                                         <td class="py-2.5 font-medium">
-                                            <Link :href="`/positions/${pos.id}`" class="text-blue-600 dark:text-blue-400 hover:underline">
+                                            <Link :href="route('app_position_show', { id: pos.id })" class="text-blue-600 dark:text-blue-400 hover:underline">
                                                 {{ pos.title }}
                                             </Link>
                                         </td>
@@ -203,7 +203,7 @@ defineProps<{
                     <div v-if="tagCloud.length === 0" class="text-gray-500 text-sm">Not enough data to generate tag cloud.</div>
                     <div class="flex flex-wrap justify-center gap-3">
                         <Link v-for="item in tagCloud" :key="item.tag" 
-                              :href="`/search?q=${encodeURIComponent(item.tag)}`"
+                              :href="route('app_search', { q: item.tag })"
                               class="px-3 py-1.5 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 transition hover:bg-blue-100 dark:hover:bg-blue-900/60 font-medium"
                               :style="{ fontSize: `${Math.max(0.8, Math.min(1.4, 0.8 + (item.count * 0.08)))}rem`, opacity: Math.max(0.65, Math.min(1, 0.45 + (item.count * 0.15))) }">
                             #{{ item.tag }}

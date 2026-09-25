@@ -5,6 +5,7 @@ import { ref } from 'vue';
 import { Button } from '@/Components/ui/button';
 import TextLink from '@/Components/TextLink.vue';
 import { HugeiconsIcon } from '@hugeicons/vue';
+import { route } from '@/route';
 import { 
     UserAccountIcon, 
     Delete01Icon, 
@@ -53,7 +54,7 @@ function toggleBlockSelected() {
     const user = getSelectedUser();
     if (!user) return;
 
-    router.post(`/admin/users/${user.id}/toggle-block`, {}, {
+    router.post(route('app_admin_user_toggle_block', { id: user.id }), {}, {
         onSuccess: () => {
             selectedRows.value = [];
         }
@@ -66,7 +67,7 @@ function changeRoleSelected() {
     if (!user) return;
 
     if (confirm(`Change role of ${user.email} to ${selectedRole.value}?`)) {
-        router.post(`/admin/users/${user.id}/role`, { roleSlug: selectedRole.value }, {
+        router.post(route('app_admin_user_change_role', { id: user.id }), { roleSlug: selectedRole.value }, {
             onSuccess: () => {
                 selectedRows.value = [];
             }
@@ -79,7 +80,7 @@ function deleteSelected() {
     const count = selectedRows.value.length;
     if (confirm(`Are you sure you want to delete ${count} selected user(s)? This will cascade delete their profile, projects, and CVs.`)) {
         selectedRows.value.forEach(id => {
-            router.delete(`/admin/users/${id}`);
+            router.delete(route('app_admin_user_delete', { id }));
         });
         selectedRows.value = [];
     }
@@ -118,7 +119,7 @@ function deleteSelected() {
                         </div>
 
                         <!-- Edit Candidate Profile if user has one -->
-                        <TextLink v-if="getSelectedUser()?.candidateProfileId" :href="`/profile/candidate/${getSelectedUser()?.candidateProfileId}`">
+                        <TextLink v-if="getSelectedUser()?.candidateProfileId" :href="route('app_profile_candidate_admin', { id: getSelectedUser()?.candidateProfileId })">
                             <Button size="sm" variant="outline" class="flex gap-1 h-7 text-xs">
                                 <HugeiconsIcon :icon="PencilEdit02Icon" :size="14" color="currentColor" /> {{ __('Edit Profile') }}
                             </Button>
@@ -201,7 +202,7 @@ function deleteSelected() {
                             <td class="p-3 text-right">
                                 <Link 
                                     v-if="u.candidateProfileId" 
-                                    :href="`/profile/candidate/${u.candidateProfileId}`" 
+                                    :href="route('app_profile_candidate_admin', { id: u.candidateProfileId })" 
                                     class="text-blue-600 hover:underline text-xs font-medium"
                                 >
                                     {{ __('Open Profile') }} &rarr;

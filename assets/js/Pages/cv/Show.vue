@@ -70,7 +70,7 @@ async function saveModalAttribute() {
 
     isSaving.value = true;
     try {
-        const response = await fetch('/profile/attributes/update', {
+        const response = await fetch(route('app_profile_update_attr'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -127,14 +127,14 @@ const canPublish = computed(() => {
 });
 
 function publishCv() {
-    router.post(`/cvs/${props.cv.id}/publish`, {}, {
+    router.post(route('app_cv_publish', { id: props.cv.id }), {}, {
         onSuccess: () => showToast('CV published successfully! Recruiters can now review it.')
     });
 }
 
 function unpublishCv() {
     if (confirm('Are you sure you want to unpublish this CV? It will no longer be visible to recruiters.')) {
-        router.post(`/cvs/${props.cv.id}/unpublish`, {}, {
+        router.post(route('app_cv_unpublish', { id: props.cv.id }), {}, {
             onSuccess: () => showToast('CV unpublished.')
         });
     }
@@ -142,7 +142,7 @@ function unpublishCv() {
 
 function deleteCv() {
     if (confirm('Are you sure you want to delete this CV?')) {
-        router.delete(`/cvs/${props.cv.id}`);
+        router.delete(route('app_cv_delete', { id: props.cv.id }));
     }
 }
 
@@ -151,7 +151,7 @@ const isRecruiter = computed(() => props.auth?.user?.roles?.includes('ROLE_RECRU
 async function toggleLike() {
     if (!isRecruiter.value) return;
     try {
-        const response = await fetch(`/cvs/${props.cv.id}/like`, {
+        const response = await fetch(route('app_cv_like', { id: props.cv.id }), {
             method: 'POST',
         });
         if (response.ok) {
@@ -177,13 +177,13 @@ async function toggleLike() {
                 &larr; {{ __('Back to My Profile') }}
             </TextLink>
             <div class="flex items-center gap-2">
-                <a :href="`/cvs/${cv.id}/public`" target="_blank">
+                <a :href="route('app_cv_public_show', { id: cv.id })" target="_blank">
                     <Button variant="outline" size="sm" class="h-8 text-xs flex gap-1 items-center">
                         <HugeiconsIcon :icon="ViewIcon" :size="14" />
                         {{ __('View Public Preview') }}
                     </Button>
                 </a>
-                <a :href="`/cvs/${cv.id}/pdf`" target="_blank">
+                <a :href="route('app_cv_pdf', { id: cv.id })" target="_blank">
                     <Button variant="outline" size="sm" class="h-8 text-xs flex gap-1 items-center">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

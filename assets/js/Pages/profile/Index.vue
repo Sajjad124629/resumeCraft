@@ -71,7 +71,7 @@ const performSaveMe = async () => {
     saveError.value = '';
 
     try {
-        const response = await fetch('/profile/update-me', {
+        const response = await fetch(route('app_profile_update_me'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(meForm.data()),
@@ -233,7 +233,7 @@ async function submitNewAttribute() {
 
     isSubmittingAdd.value = true;
     try {
-        const response = await fetch('/profile/attributes/update', {
+        const response = await fetch(route('app_profile_update_attr'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -309,7 +309,7 @@ async function saveAttributeFromModal() {
 
     isSubmittingEdit.value = true;
     try {
-        const response = await fetch('/profile/attributes/update', {
+        const response = await fetch(route('app_profile_update_attr'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -344,7 +344,7 @@ async function deleteSelectedAttributes() {
     if (selectedAttributes.value.length === 0) return;
     const count = selectedAttributes.value.length;
     if (await confirmAction(`Remove ${count} attribute(s) from your profile?`)) {
-        router.post('/profile/attributes/batch-delete', {
+        router.post(route('app_profile_batch_delete_attr'), {
             candidateId: props.targetCandidateId,
             ids: selectedAttributes.value,
         }, {
@@ -361,8 +361,7 @@ async function deleteSelectedAttributes() {
 
 async function removeAttribute(attrId: number) {
     if (await confirmAction('Remove this attribute from your profile?')) {
-        const q = props.targetCandidateId ? `?candidateId=${props.targetCandidateId}` : '';
-        router.delete(`/profile/attributes/${attrId}${q}`, {
+        router.delete(route('app_profile_delete_attr', { attributeId: attrId, ...(props.targetCandidateId ? { candidateId: props.targetCandidateId } : {}) }), {
             onSuccess: () => {
                 selectedAttributes.value = selectedAttributes.value.filter(id => id !== attrId);
                 showToast('Attribute removed successfully!');
@@ -394,7 +393,7 @@ function toggleAllProjects() {
 
 function editSelectedProject() {
     if (selectedProjects.value.length === 1) {
-        router.visit(`/profile/projects/${selectedProjects.value[0]}/edit`);
+        router.visit(route('app_profile_project_edit_view', { id: selectedProjects.value[0] }));
     }
 }
 
@@ -402,7 +401,7 @@ async function deleteSelectedProjects() {
     if (selectedProjects.value.length === 0) return;
     const count = selectedProjects.value.length;
     if (await confirmAction(`Delete ${count} project(s)?`)) {
-        router.post('/profile/projects/batch-delete', {
+        router.post(route('app_profile_project_batch_delete'), {
             candidateId: props.targetCandidateId,
             ids: selectedProjects.value,
         }, {
@@ -440,19 +439,19 @@ function toggleAllCvs() {
 
 function editSelectedCv() {
     if (selectedCvs.value.length === 1) {
-        router.visit(`/cvs/${selectedCvs.value[0]}`);
+        router.visit(route('app_cv_show', { id: selectedCvs.value[0] }));
     }
 }
 
 function viewSelectedCvPublic() {
     if (selectedCvs.value.length === 1) {
-        window.open(`/cvs/${selectedCvs.value[0]}/public`, '_blank');
+        window.open(route('app_cv_public_show', { id: selectedCvs.value[0] }), '_blank');
     }
 }
 
 function downloadSelectedCvPdf() {
     if (selectedCvs.value.length === 1) {
-        window.open(`/cvs/${selectedCvs.value[0]}/pdf`, '_blank');
+        window.open(route('app_cv_pdf', { id: selectedCvs.value[0] }), '_blank');
     }
 }
 
@@ -460,7 +459,7 @@ async function deleteSelectedCvs() {
     if (selectedCvs.value.length === 0) return;
     const count = selectedCvs.value.length;
     if (await confirmAction(`Are you sure you want to delete ${count} CV(s)?`)) {
-        router.post('/cvs/batch-delete', {
+        router.post(route('app_cv_batch_delete'), {
             ids: selectedCvs.value,
         }, {
             onSuccess: () => {
@@ -501,7 +500,7 @@ async function deleteSelectedCvs() {
                     class="inline-block w-2.5 h-7 rounded-full bg-gradient-to-b from-primary to-blue-400 shadow-[0_0_12px_rgba(67,97,238,0.5)]"></span>
                 {{ headingText }}
             </h2>
-            <TextLink v-if="profile.id" :href="`/profile/public/${profile.id}`">
+            <TextLink v-if="profile.id" :href="route('app_profile_public', { id: profile.id })">
                 <Button size="sm" variant="outline" class="flex gap-1.5 items-center">
                     <HugeiconsIcon :icon="ViewIcon" :size="16" /> View Public Profile
                 </Button>
@@ -722,7 +721,7 @@ async function deleteSelectedCvs() {
                                     class="border-b hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer"
                                     :class="{ 'bg-blue-50/50 dark:bg-blue-900/10': selectedProjects.includes(p.id) }"
                                     @click="toggleProjectSelection(p.id)"
-                                    @dblclick="router.visit(`/profile/projects/${p.id}/edit`)">
+                                    @dblclick="router.visit(route('app_profile_project_edit_view', { id: p.id }))">
                                     <td class="p-2.5" @click.stop>
                                         <input type="checkbox" :value="p.id" :checked="selectedProjects.includes(p.id)"
                                             @change="toggleProjectSelection(p.id)" class="form-checkbox" />
@@ -824,13 +823,13 @@ async function deleteSelectedCvs() {
                                 <tr v-for="cv in cvs" :key="cv.id"
                                     class="border-b hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer"
                                     :class="{ 'bg-blue-50/50 dark:bg-blue-900/10': selectedCvs.includes(cv.id) }"
-                                    @click="toggleCvSelection(cv.id)" @dblclick="router.visit(`/cvs/${cv.id}`)">
+                                    @click="toggleCvSelection(cv.id)" @dblclick="router.visit(route('app_cv_show', { id: cv.id }))">
                                     <td class="p-2.5" @click.stop>
                                         <input type="checkbox" :value="cv.id" :checked="selectedCvs.includes(cv.id)"
                                             @change="toggleCvSelection(cv.id)" class="form-checkbox" />
                                     </td>
                                     <td class="p-2.5">
-                                        <Link :href="`/cvs/${cv.id}`" class="text-blue-600 hover:underline font-medium"
+                                        <Link :href="route('app_cv_show', { id: cv.id })" class="text-blue-600 hover:underline font-medium"
                                             @click.stop>
                                             {{ cv.positionTitle }}
                                         </Link>

@@ -3,6 +3,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import { Head, router, Link } from '@inertiajs/vue3';
 import { Button } from '@/Components/ui/button';
 import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { route } from '@/route';
 
 defineOptions({ layout: AppLayout });
 
@@ -37,12 +38,12 @@ function toggleAllCvs() {
 
 function viewCv() {
     if (selectedCvs.value.length === 1) {
-        router.visit(`/cvs/${selectedCvs.value[0]}`);
+        router.visit(route('app_cv_show', { id: selectedCvs.value[0] }));
     }
 }
 
 function generateCv() {
-    router.post(`/cvs/position/${props.position.id}/generate`);
+    router.post(route('app_cv_generate', { id: props.position.id }));
 }
 
 // Discussions
@@ -88,7 +89,7 @@ function renderMarkdown(raw: string): string {
 
 async function fetchPosts() {
     try {
-        const response = await fetch(`/discussions/position/${props.position.id}`);
+        const response = await fetch(route('app_discussion_get', { id: props.position.id }));
         if (response.ok) {
             posts.value = await response.json();
         }
@@ -101,7 +102,7 @@ async function submitPost() {
     if (!newPost.value.trim()) return;
     isSubmitting.value = true;
     try {
-        await fetch(`/discussions/position/${props.position.id}`, {
+        await fetch(route('app_discussion_post', { id: props.position.id }), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ content: newPost.value }),
@@ -148,7 +149,7 @@ onUnmounted(() => {
                         <h3 class="text-lg font-semibold">Submitted CVs</h3>
                         <!-- CV Toolbar -->
                         <div class="flex items-center gap-2">
-                            <a :href="`/positions/${position.id}/export`" target="_blank" class="inline-flex items-center gap-1.5 h-8 px-3 rounded-md text-xs font-semibold border border-green-300 dark:border-green-800 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/40 transition">
+                            <a :href="route('app_position_export', { id: position.id })" target="_blank" class="inline-flex items-center gap-1.5 h-8 px-3 rounded-md text-xs font-semibold border border-green-300 dark:border-green-800 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/40 transition">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="8" y1="13" x2="16" y2="13"></line><line x1="8" y1="17" x2="16" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                                 Export CSV
                             </a>
@@ -177,7 +178,7 @@ onUnmounted(() => {
                                         <input type="checkbox" :value="cv.id" :checked="selectedCvs.includes(cv.id)" @change="toggleCvSelection(cv.id)" class="form-checkbox" />
                                     </td>
                                     <td class="p-2 font-medium">
-                                        <Link :href="`/cvs/${cv.id}`" class="text-blue-600 hover:underline">
+                                        <Link :href="route('app_cv_show', { id: cv.id })" class="text-blue-600 hover:underline">
                                             {{ cv.candidateName }}
                                         </Link>
                                     </td>
@@ -210,7 +211,7 @@ onUnmounted(() => {
                                 <div>
                                     <Link 
                                         v-if="isRecruiter && post.author.candidateProfileId" 
-                                        :href="`/profile/public/${post.author.candidateProfileId}`" 
+                                        :href="route('app_profile_public', { id: post.author.candidateProfileId })" 
                                         class="font-semibold text-sm text-blue-600 hover:underline flex items-center gap-1.5"
                                     >
                                         <span>{{ post.author.name }}</span>
@@ -230,7 +231,7 @@ onUnmounted(() => {
                         <Button type="submit" :disabled="isSubmitting || !newPost.trim()">Post</Button>
                     </form>
                     <div v-else class="p-3 bg-gray-50 dark:bg-gray-800 text-center text-sm text-gray-500 rounded">
-                        <Link href="/login" class="text-blue-600 hover:underline font-medium">Log in</Link> to participate in the discussion.
+                        <Link :href="route('app_login')" class="text-blue-600 hover:underline font-medium">Log in</Link> to participate in the discussion.
                     </div>
                 </div>
             </div>
@@ -243,7 +244,7 @@ onUnmounted(() => {
                         <Link 
                             v-for="tag in position.projectTags" 
                             :key="tag" 
-                            :href="`/search?q=${encodeURIComponent(tag)}`"
+                            :href="route('app_search', { q: tag })"
                             class="px-2.5 py-1 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-800 rounded-full text-xs font-medium hover:bg-blue-100 transition-colors"
                         >
                             #{{ tag }}

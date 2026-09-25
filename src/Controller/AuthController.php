@@ -14,6 +14,8 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
+use Symfony\Bridge\Twig\Mime\TemplatedEmail;
+use Symfony\Component\Mime\Address;
 use SymfonyCasts\Bundle\VerifyEmail\VerifyEmailHelperInterface;
 use SymfonyCasts\Bundle\VerifyEmail\Exception\VerifyEmailExceptionInterface;
 
@@ -22,6 +24,10 @@ use SymfonyCasts\Bundle\VerifyEmail\Exception\VerifyEmailExceptionInterface;
  */
 class AuthController extends AbstractController
 {
+    public function __construct(
+        private \Symfony\Bundle\SecurityBundle\Security $security
+    ) {}
+
     #[Route('/login', name: 'app_login', methods: ['GET', 'POST'])]
     public function login(AuthenticationUtils $authenticationUtils, InertiaService $inertia): Response
     {
@@ -41,8 +47,14 @@ class AuthController extends AbstractController
     }
 
     #[Route('/register', name: 'app_register', methods: ['GET', 'POST'])]
-    public function register(Request $request, UserPasswordHasherInterface $userPasswordHasher, EntityManagerInterface $entityManager, InertiaService $inertia, VerifyEmailHelperInterface $verifyEmailHelper, MailerInterface $mailer): Response
-    {
+    public function register(
+        Request $request,
+        UserPasswordHasherInterface $userPasswordHasher,
+        EntityManagerInterface $entityManager,
+        InertiaService $inertia,
+        VerifyEmailHelperInterface $verifyEmailHelper,
+        MailerInterface $mailer
+    ): Response {
         if ($this->getUser()) {
             return $this->redirectToRoute('app_dashboard');
         }
@@ -50,12 +62,41 @@ class AuthController extends AbstractController
         if ($request->isMethod('POST')) {
             $data = json_decode($request->getContent(), true) ?? $request->request->all();
 
+            $email = trim($data['email'] ?? '');
+            $password = $data['password'] ?? '';
+            $name = trim($data['name'] ?? ($data['firstName'] ?? ''));
+
+            if (!$email) {
+                return $inertia->render('auth/Register', [
+                    'errors' => ['email' => 'Email is required.']
+                ]);
+            }
+
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                return $inertia->render('auth/Register', [
+                    'errors' => ['email' => 'Please enter a valid email address.']
+                ]);
+            }
+
+            if (!$password || strlen($password) < 6) {
+                return $inertia->render('auth/Register', [
+                    'errors' => ['password' => 'Password must be at least 6 characters.']
+                ]);
+            }
+
+            $existingUser = $entityManager->getRepository(User::class)->findOneBy(['email' => $email]);
+            if ($existingUser) {
+                return $inertia->render('auth/Register', [
+                    'errors' => ['email' => 'An account with this email already exists.']
+                ]);
+            }
+
             $user = new User();
-            $user->setEmail($data['email'] ?? '');
+            $user->setEmail($email);
             $user->setPassword(
                 $userPasswordHasher->hashPassword(
                     $user,
-                    $data['password'] ?? ''
+                    $password
                 )
             );
             $user->setIsVerified(false);
@@ -70,37 +111,58 @@ class AuthController extends AbstractController
 
             $details = new \App\Entity\UserDetails();
             $details->setUser($user);
-            $details->setFirstName($data['firstName'] ?? ($data['name'] ?? ''));
-            $details->setLastName($data['lastName'] ?? '');
+            $nameParts = explode(' ', $name, 2);
+            $details->setFirstName($nameParts[0] ?? $name);
+            $details->setLastName($nameParts[1] ?? '');
 
             $entityManager->persist($user);
             $entityManager->persist($profile);
             $entityManager->persist($details);
             $entityManager->flush();
 
-            // Generate Verification Email URL
-            $signatureComponents = $verifyEmailHelper->generateSignature(
-                'app_verify_email',
-                $user->getId(),
-                $user->getEmail(),
-                ['id' => $user->getId()]
-            );
-
-            // Send Email
-            $email = (new Email())
-                ->from('no-reply@cvproject.local')
-                ->to($user->getEmail())
-                ->subject('Please Confirm your Email')
-                ->html('<p>Please confirm your email by clicking this link: <a href="' . $signatureComponents->getSignedUrl() . '">Confirm my Email</a></p>');
-
+            // Send Verification Email with beautiful HTML template
             try {
-                $mailer->send($email);
-            } catch (\Exception $e) {
-                // Ignore in dev if mailer fails
+                $signatureComponents = $verifyEmailHelper->generateSignature(
+                    'app_verify_email',
+                    (string) $user->getId(),
+                    $user->getEmail(),
+                    ['id' => $user->getId()]
+                );
+
+                $fromAddress = $_ENV['MAIL_FROM_ADDRESS'] ?? 'sajjadhossainridoy83@gmail.com';
+                $fromName = $_ENV['MAIL_FROM_NAME'] ?? 'ResumeCraft';
+
+                $emailMessage = (new TemplatedEmail())
+                    ->from(new Address($fromAddress, $fromName))
+                    ->to($user->getEmail())
+                    ->subject('Confirm your Email - ResumeCraft')
+                    ->htmlTemplate('emails/verify_email.html.twig')
+                    ->context([
+                        'userName' => $name ?: 'there',
+                        'signedUrl' => $signatureComponents->getSignedUrl(),
+                    ]);
+
+                $mailer->send($emailMessage);
+            } catch (\Throwable $e) {
+                error_log('Mailer error during registration: ' . $e->getMessage());
             }
 
-            $this->addFlash('success', 'Registration successful. Please check your email to verify your account.');
-            return $this->redirectToRoute('app_login');
+            // Auto-login newly registered user
+            try {
+                $response = $this->security->login($user, 'form_login', 'main');
+                if ($response) {
+                    return $response;
+                }
+            } catch (\Throwable $e) {
+                try {
+                    $this->security->login($user);
+                } catch (\Throwable $e2) {
+                    // ignore
+                }
+            }
+
+            $this->addFlash('success', 'Registration successful! Welcome to your dashboard.');
+            return $this->redirectToRoute('app_dashboard');
         }
 
         return $inertia->render('auth/Register');
@@ -131,9 +193,9 @@ class AuthController extends AbstractController
         $user->setIsVerified(true);
         $entityManager->flush();
 
-        $this->addFlash('success', 'Your email address has been verified.');
+        $this->addFlash('success', 'Your email address has been verified successfully!');
 
-        return $this->redirectToRoute('app_login');
+        return $this->getUser() ? $this->redirectToRoute('app_dashboard') : $this->redirectToRoute('app_login');
     }
 
     #[Route('/forgot-password', name: 'password.request', methods: ['GET', 'POST'])]

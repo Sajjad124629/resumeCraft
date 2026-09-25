@@ -30,9 +30,5 @@ class UserChecker implements UserCheckerInterface
         if ($user->isBlocked()) {
             throw new CustomUserMessageAccountStatusException('Your account has been blocked by an administrator.');
         }
-
-        if ($user->isVerified() === false && !$user->getGoogleId() && !$user->getFacebookId()) {
-            throw new CustomUserMessageAccountStatusException('Your email is not verified.');
-        }
     }
 }

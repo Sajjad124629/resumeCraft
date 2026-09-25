@@ -12,11 +12,13 @@ import IconGoogle from '@/Components/icon/icon-google.vue';
 import IconFacebook from '@/Components/icon/icon-facebook.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import Checkbox from '@/Components/ui/checkbox/Checkbox.vue';
+import { route } from '@/route';
 
 
 defineProps<{
     status?: string;
     canResetPassword: boolean;
+    error?: string;
 }>();
 
 const form = useForm({
@@ -31,7 +33,7 @@ defineOptions({
 });
 
 const submit = () => {
-    form.post('/login', {
+    form.post(route('app_login'), {
         forceFormData: true,
         onFinish: () => form.reset('password'),
     });
@@ -41,6 +43,9 @@ const submit = () => {
 <template>
 
     <Head title="Log in" />
+    <div v-if="error" class="p-3.5 mb-5 text-sm font-medium text-red-700 bg-red-100 rounded-lg dark:bg-red-900/40 dark:text-red-300 border border-red-200 dark:border-red-800">
+        {{ error }}
+    </div>
     <form @submit.prevent="submit" class="space-y-5 dark:text-white">
         <div>
             <Label>{{ __('Email') }}</Label>
@@ -76,13 +81,13 @@ const submit = () => {
         </div>
 
         <div class="flex items-center justify-center gap-4 my-6">
-            <a href="/connect/facebook"
+            <a :href="route('connect_facebook')"
                 class="w-11 h-11 rounded-full flex items-center justify-center bg-gradient-to-tr from-[#9c27b0] via-[#e1147b] to-[#601bf9] text-white shadow-md hover:scale-110 hover:shadow-lg transition-all duration-200"
                 title="Facebook">
                 <icon-facebook class="w-5 h-5 text-white" />
             </a>
 
-            <a href="/connect/google"
+            <a :href="route('connect_google')"
                 class="w-11 h-11 rounded-full flex items-center justify-center bg-gradient-to-tr from-[#9c27b0] via-[#e1147b] to-[#601bf9] text-white shadow-md hover:scale-110 hover:shadow-lg transition-all duration-200"
                 title="Google">
                 <icon-google class="w-5 h-5 text-white" />
@@ -91,7 +96,7 @@ const submit = () => {
     </form>
     <div class="text-center dark:text-white mt-6 text-sm">
         {{ __("Don't have an account ?") }}
-        <TextLink href="/register"
+        <TextLink :href="route('app_register')"
             class="font-bold uppercase transition text-[#7c3aed] hover:text-[#e1147b] dark:text-[#a855f7] ml-1">{{
                 __('SIGN UP') }}
         </TextLink>

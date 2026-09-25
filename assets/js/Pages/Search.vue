@@ -52,7 +52,7 @@ defineProps<{
                         <tbody>
                             <tr v-for="pos in positions" :key="pos.id" class="border-b hover:bg-gray-50 dark:hover:bg-gray-800/50">
                                 <td class="p-2.5 font-medium">
-                                    <Link :href="`/positions/${pos.id}`" class="text-blue-600 hover:underline">
+                                    <Link :href="route('app_position_show', { id: pos.id })" class="text-blue-600 hover:underline">
                                         {{ pos.title }}
                                     </Link>
                                 </td>
@@ -89,7 +89,7 @@ defineProps<{
                         <tbody>
                             <tr v-for="cv in cvs" :key="cv.id" class="border-b hover:bg-gray-50 dark:hover:bg-gray-800/50">
                                 <td class="p-2 font-medium">
-                                    <Link :href="`/cvs/${cv.id}`" class="text-blue-600 hover:underline">
+                                    <Link :href="route('app_cv_show', { id: cv.id })" class="text-blue-600 hover:underline">
                                         {{ cv.candidateName }}
                                     </Link>
                                 </td>

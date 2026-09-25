@@ -13,6 +13,7 @@ import IconFacebook from '@/Components/icon/icon-facebook.vue';
 import Checkbox from '@/Components/ui/checkbox/Checkbox.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import AuthLayout from '@/Layouts/AuthLayout.vue';
+import { route } from '@/route';
 const form = useForm({
     name: '',
     email: '',
@@ -25,7 +26,7 @@ defineOptions({
     layout: AuthLayout
 });
 const submit = () => {
-    form.post('/register', {
+    form.post(route('app_register'), {
         onFinish: () => form.reset('password', 'password_confirmation'),
     });
 };
@@ -84,13 +85,13 @@ const submit = () => {
         </div>
 
         <div class="flex items-center justify-center gap-4 my-6">
-            <a href="/connect/facebook"
+            <a :href="route('connect_facebook')"
                 class="w-11 h-11 rounded-full flex items-center justify-center bg-gradient-to-tr from-[#9c27b0] via-[#e1147b] to-[#601bf9] text-white shadow-md hover:scale-110 hover:shadow-lg transition-all duration-200"
                 title="Facebook">
                 <icon-facebook class="w-5 h-5 text-white" />
             </a>
 
-            <a href="/connect/google"
+            <a :href="route('connect_google')"
                 class="w-11 h-11 rounded-full flex items-center justify-center bg-gradient-to-tr from-[#9c27b0] via-[#e1147b] to-[#601bf9] text-white shadow-md hover:scale-110 hover:shadow-lg transition-all duration-200"
                 title="Google">
                 <icon-google class="w-5 h-5 text-white" />
@@ -99,7 +100,7 @@ const submit = () => {
     </form>
     <div class="text-center dark:text-white mt-6 text-sm">
         {{ __("Already have an account?") }}
-        <TextLink href="/login"
+        <TextLink :href="route('app_login')"
             class="font-bold uppercase transition text-[#7c3aed] hover:text-[#e1147b] dark:text-[#a855f7] ml-1">{{
                 __('SIGN IN') }}
         </TextLink>

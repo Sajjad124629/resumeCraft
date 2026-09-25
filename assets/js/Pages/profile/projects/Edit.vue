@@ -135,7 +135,7 @@ const submit = () => {
                 </div>
 
                 <div class="flex justify-end items-center mt-8 mb-4">
-                    <TextLink :href="candidateId ? `/profile/candidate/${candidateId}` : route('app_profile_index')">
+                    <TextLink :href="candidateId ? route('app_profile_candidate_admin', { id: candidateId }) : route('app_profile_index')">
                         <Button type="button" variant="outline"
                             class="btn btn-outline-danger flex gap-1 items-center">{{ __('Cancel') }}</Button>
                     </TextLink>

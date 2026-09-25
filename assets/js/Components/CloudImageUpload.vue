@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { HugeiconsIcon } from '@hugeicons/vue';
 import { CloudUploadIcon, Delete01Icon, Image01Icon } from '@hugeicons/core-free-icons';
+import { route } from '@/route';
 
 const props = defineProps<{
     modelValue?: string | null;
@@ -58,7 +59,7 @@ async function handleFile(file: File) {
         const formData = new FormData();
         formData.append('file', file);
 
-        const res = await fetch('/api/upload-to-cloud', {
+        const res = await fetch(route('app_upload_to_cloud'), {
             method: 'POST',
             body: formData,
         });
