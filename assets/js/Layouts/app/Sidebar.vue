@@ -94,6 +94,12 @@ const menuItems = computed<MenuItem[]>(() => {
             candidateOnly: true,
         },
         {
+            title: 'Account Settings',
+            icon: Settings01Icon,
+            route: route('app_profile_settings'),
+            roles: ['ROLE_RECRUITER', 'ROLE_ADMIN'],
+        },
+        {
             title: 'User Management',
             icon: UserMultiple02Icon,
             route: route('app_admin_users'),

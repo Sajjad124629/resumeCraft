@@ -15,6 +15,7 @@ class InertiaService
         private Environment $twig,
         private RouterInterface $router,
         private \Symfony\Bundle\SecurityBundle\Security $security,
+        private \Doctrine\ORM\EntityManagerInterface $em,
         private string $rootView = 'app.html.twig',
         private array $sharedProps = []
     ) {}
@@ -43,8 +44,32 @@ class InertiaService
         $user = $this->security->getUser();
         $authProp = null;
         if ($user instanceof \App\Entity\User) {
-            $userDetails = $user->getUserDetails();
-            $fullname = $userDetails ? ($userDetails->getFirstName() . ' ' . $userDetails->getLastName()) : ($user->getRole() ? $user->getRole()->getName() : 'Admin');
+            /** @var \App\Entity\User|null $freshUser */
+            $freshUser = $this->em->find(\App\Entity\User::class, $user->getId());
+            if ($freshUser) {
+                try {
+                    $this->em->refresh($freshUser);
+                } catch (\Exception $e) {
+                }
+                $user = $freshUser;
+            }
+
+            $userDetails = $user->getUserDetails() ?? $this->em->getRepository(\App\Entity\UserDetails::class)->findOneBy(['user' => $user]);
+            if ($userDetails) {
+                try {
+                    $this->em->refresh($userDetails);
+                } catch (\Exception $e) {
+                }
+                $user->setUserDetails($userDetails);
+            }
+
+            $firstName = $userDetails?->getFirstName() ?? '';
+            $lastName = $userDetails?->getLastName() ?? '';
+            $fullname = trim($firstName . ' ' . $lastName);
+            if (empty($fullname)) {
+                $fullname = $user->getRole() ? $user->getRole()->getName() : 'User';
+            }
+
             $photo = $userDetails?->getPhoto();
             $roleSlug = $user->getRole()?->getSlug() ?? 'ROLE_USER';
             $roleName = $user->getRole()?->getName() ?? 'User';

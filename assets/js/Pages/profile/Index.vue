@@ -71,9 +71,13 @@ const performSaveMe = async () => {
     saveError.value = '';
 
     try {
-        const response = await fetch(route('app_profile_update_me'), {
+        const response = await fetch('/profile/update-me', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
             body: JSON.stringify(meForm.data()),
         });
 
@@ -86,15 +90,32 @@ const performSaveMe = async () => {
 
         if (response.ok && data.success) {
             meForm.version = data.version;
-            // Instantly sync with Inertia auth.user so the Header avatar updates in real-time
+            const fullName = `${meForm.firstName || ''} ${meForm.lastName || ''}`.trim() || 'User';
+
+            // Instantly sync with Inertia auth.user so the Header avatar and name update in real-time
             if (page.props.auth && (page.props.auth as any).user) {
                 const u = (page.props.auth as any).user;
                 u.photo = meForm.photo;
                 u.avatar = meForm.photo;
+                u.name = fullName;
+                u.fullName = fullName;
                 if (u.user_detail) {
                     u.user_detail.image = meForm.photo;
+                    u.user_detail.fullname = fullName;
                 }
             }
+
+            // Dispatch global event for instant header reactivity
+            if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('auth-user-updated', {
+                    detail: {
+                        fullName: data.fullName || fullName,
+                        photo: data.photo || meForm.photo,
+                    }
+                }));
+            }
+
+            router.reload({ only: ['auth'] });
         } else {
             saveError.value = data.error || 'Failed to save changes.';
         }
@@ -105,7 +126,7 @@ const performSaveMe = async () => {
     }
 };
 
-const saveMeSectionDebounced = useDebounceFn(performSaveMe, 6000);
+const saveMeSectionDebounced = useDebounceFn(performSaveMe, 800);
 
 watch(() => [meForm.firstName, meForm.lastName, meForm.location], () => {
     saveMeSectionDebounced();
@@ -115,6 +136,49 @@ watch(() => meForm.photo, () => {
     // When photo is uploaded, changed or removed, save immediately
     performSaveMe();
 });
+
+// --- Password Change Modal ---
+const showPasswordModal = ref(false);
+const passwordForm = ref({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+});
+const passwordLoading = ref(false);
+const passwordError = ref('');
+
+async function submitPasswordChange() {
+    passwordError.value = '';
+    if (!passwordForm.value.newPassword || passwordForm.value.newPassword.length < 6) {
+        passwordError.value = 'New password must be at least 6 characters.';
+        return;
+    }
+    if (passwordForm.value.newPassword !== passwordForm.value.confirmPassword) {
+        passwordError.value = 'New password and confirmation do not match.';
+        return;
+    }
+
+    passwordLoading.value = true;
+    try {
+        const res = await fetch(route('app_profile_change_password'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(passwordForm.value),
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+            showPasswordModal.value = false;
+            passwordForm.value = { currentPassword: '', newPassword: '', confirmPassword: '' };
+            showToast('Password changed successfully!');
+        } else {
+            passwordError.value = data.error || 'Failed to update password.';
+        }
+    } catch (e) {
+        passwordError.value = 'Network error occurred while updating password.';
+    } finally {
+        passwordLoading.value = false;
+    }
+}
 
 
 // --- Toast and Modal Confirm Helpers ---
@@ -534,21 +598,35 @@ async function deleteSelectedCvs() {
 
                         <div class="mb-4">
                             <Label :isRequired="true" for="firstName">{{ __('First Name') }}</Label>
-                            <Input id="firstName" type="text" v-model.trim="meForm.firstName"
+                            <Input id="firstName" type="text" v-model.trim="meForm.firstName" @blur="performSaveMe"
                                 :placeholder="__('First Name')" class="form-input mt-1 block w-full" required />
                             <InputError :message="meForm.errors.firstName" />
                         </div>
                         <div class="mb-4">
                             <Label :isRequired="true" for="lastName">{{ __('Last Name') }}</Label>
-                            <Input id="lastName" type="text" v-model.trim="meForm.lastName"
+                            <Input id="lastName" type="text" v-model.trim="meForm.lastName" @blur="performSaveMe"
                                 :placeholder="__('Last Name')" class="form-input mt-1 block w-full" required />
                             <InputError :message="meForm.errors.lastName" />
                         </div>
                         <div class="mb-4">
                             <Label for="location">{{ __('Location') }}</Label>
-                            <Input id="location" type="text" v-model.trim="meForm.location"
+                            <Input id="location" type="text" v-model.trim="meForm.location" @blur="performSaveMe"
                                 :placeholder="__('e.g. Remote, NY')" class="form-input mt-1 block w-full" />
                             <InputError :message="meForm.errors.location" />
+                        </div>
+
+                        <!-- Account Security / Password Button -->
+                        <div
+                            class="pt-4 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center">
+                            <div>
+                                <span class="text-xs font-semibold text-gray-700 dark:text-gray-300 block">{{
+                                    __('Account Security') }}</span>
+                                <span class="text-[11px] text-gray-400">{{ __('Update account password') }}</span>
+                            </div>
+                            <Button type="button" size="sm" variant="outline" class="text-xs h-8 rounded-lg"
+                                @click="showPasswordModal = true">
+                                {{ __('Change Password') }}
+                            </Button>
                         </div>
                     </div>
                 </div>
@@ -823,14 +901,15 @@ async function deleteSelectedCvs() {
                                 <tr v-for="cv in cvs" :key="cv.id"
                                     class="border-b hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer"
                                     :class="{ 'bg-blue-50/50 dark:bg-blue-900/10': selectedCvs.includes(cv.id) }"
-                                    @click="toggleCvSelection(cv.id)" @dblclick="router.visit(route('app_cv_show', { id: cv.id }))">
+                                    @click="toggleCvSelection(cv.id)"
+                                    @dblclick="router.visit(route('app_cv_show', { id: cv.id }))">
                                     <td class="p-2.5" @click.stop>
                                         <input type="checkbox" :value="cv.id" :checked="selectedCvs.includes(cv.id)"
                                             @change="toggleCvSelection(cv.id)" class="form-checkbox" />
                                     </td>
                                     <td class="p-2.5">
-                                        <Link :href="route('app_cv_show', { id: cv.id })" class="text-blue-600 hover:underline font-medium"
-                                            @click.stop>
+                                        <Link :href="route('app_cv_show', { id: cv.id })"
+                                            class="text-blue-600 hover:underline font-medium" @click.stop>
                                             {{ cv.positionTitle }}
                                         </Link>
                                     </td>
@@ -1072,6 +1151,58 @@ async function deleteSelectedCvs() {
                         </Button>
                         <Button type="submit" :disabled="isSubmittingEdit">
                             <span>{{ isSubmittingEdit ? __('Saving...') : __('Save Changes') }}</span>
+                        </Button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Password Change Modal -->
+        <div v-if="showPasswordModal"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-fadeIn">
+            <div
+                class="panel w-full max-w-md p-6 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-800 space-y-4">
+                <div class="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
+                    <h4 class="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                        <span
+                            class="inline-block w-2.5 h-5 rounded-full bg-gradient-to-b from-purple-500 to-indigo-500"></span>
+                        {{ __('Change Password') }}
+                    </h4>
+                    <button @click="showPasswordModal = false"
+                        class="text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
+                </div>
+
+                <div v-if="passwordError"
+                    class="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 text-xs font-medium">
+                    {{ passwordError }}
+                </div>
+
+                <form @submit.prevent="submitPasswordChange" class="space-y-3">
+                    <div>
+                        <Label :isRequired="true" for="currentPwd">{{ __('Current Password') }}</Label>
+                        <Input id="currentPwd" type="password" v-model="passwordForm.currentPassword"
+                            class="form-input mt-1 block w-full rounded-xl" required
+                            :placeholder="__('Enter current password')" />
+                    </div>
+                    <div>
+                        <Label :isRequired="true" for="newPwd">{{ __('New Password') }}</Label>
+                        <Input id="newPwd" type="password" v-model="passwordForm.newPassword"
+                            class="form-input mt-1 block w-full rounded-xl" required
+                            :placeholder="__('Min. 6 characters')" />
+                    </div>
+                    <div>
+                        <Label :isRequired="true" for="confirmPwd">{{ __('Confirm Password') }}</Label>
+                        <Input id="confirmPwd" type="password" v-model="passwordForm.confirmPassword"
+                            class="form-input mt-1 block w-full rounded-xl" required
+                            :placeholder="__('Re-type new password')" />
+                    </div>
+
+                    <div class="flex justify-end gap-2 pt-3 border-t border-gray-100 dark:border-gray-800">
+                        <Button type="button" variant="outline" @click="showPasswordModal = false">
+                            {{ __('Cancel') }}
+                        </Button>
+                        <Button type="submit" variant="destructive" :disabled="passwordLoading">
+                            {{ passwordLoading ? __('Updating...') : __('Update Password') }}
                         </Button>
                     </div>
                 </form>

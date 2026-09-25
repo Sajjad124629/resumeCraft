@@ -15,6 +15,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 /**
  * @method User|null getUser()
@@ -59,17 +60,160 @@ class ProfileController extends AbstractController
 
         $candidate = $user->getCandidateProfile();
         if (!$candidate) {
-            if (in_array('ROLE_ADMIN', $user->getRoles())) {
-                $this->addFlash('info', 'Administrators do not have a candidate profile. You can manage candidates from User Management.');
-                return $this->redirectToRoute('app_admin_users');
-            }
-            if (in_array('ROLE_RECRUITER', $user->getRoles())) {
-                return $this->redirectToRoute('app_position_index');
-            }
-            throw $this->createAccessDeniedException('No candidate profile associated with your user.');
+            return $this->redirectToRoute('app_profile_settings');
         }
 
         return $this->renderProfileView($candidate, $inertia, $em, $achievementService, false);
+    }
+
+    #[Route('/settings', name: 'app_profile_settings', methods: ['GET'])]
+    public function settings(InertiaService $inertia, EntityManagerInterface $em): Response
+    {
+        /** @var User|null $user */
+        $user = $this->getUser();
+        if (!$user) {
+            return $this->redirectToRoute('app_login');
+        }
+
+        // Account settings is strictly for Admin and Recruiter. Candidates use /profile
+        $roles = $user->getRoles();
+        if (!in_array('ROLE_ADMIN', $roles) && !in_array('ROLE_RECRUITER', $roles)) {
+            return $this->redirectToRoute('app_profile_index');
+        }
+
+        /** @var User $freshUser */
+        $freshUser = $em->find(User::class, $user->getId()) ?? $user;
+        try {
+            $em->refresh($freshUser);
+        } catch (\Exception $e) {
+        }
+        $details = $freshUser->getUserDetails() ?? $em->getRepository(\App\Entity\UserDetails::class)->findOneBy(['user' => $freshUser]);
+        if ($details) {
+            try {
+                $em->refresh($details);
+            } catch (\Exception $e) {
+            }
+        }
+        $candidate = $freshUser->getCandidateProfile();
+
+        return $inertia->render('profile/Settings', [
+            'user' => [
+                'id' => $freshUser->getId(),
+                'email' => $freshUser->getEmail(),
+                'role' => $freshUser->getRole()?->getSlug() ?? 'ROLE_USER',
+                'roleName' => $freshUser->getRole()?->getName() ?? 'User',
+                'isVerified' => $freshUser->isVerified(),
+                'hasPassword' => !empty($freshUser->getPassword()),
+            ],
+            'profile' => [
+                'firstName' => $details?->getFirstName() ?? '',
+                'lastName' => $details?->getLastName() ?? '',
+                'phone' => $details?->getPhone() ?? '',
+                'photo' => $details?->getPhoto() ?? '',
+                'location' => $candidate?->getLocation() ?? '',
+            ],
+        ]);
+    }
+
+    #[Route('/settings/update', name: 'app_profile_settings_update', methods: ['POST', 'PUT'])]
+    public function updateSettings(Request $request, EntityManagerInterface $em): Response
+    {
+        /** @var User|null $user */
+        $user = $this->getUser();
+        if (!$user) {
+            return $this->json(['error' => 'Unauthorized'], 401);
+        }
+
+        /** @var User $freshUser */
+        $freshUser = $em->find(User::class, $user->getId()) ?? $user;
+        $data = $request->getPayload()->all() ?: (json_decode($request->getContent(), true) ?? $request->request->all());
+
+        $details = $freshUser->getUserDetails() ?? $em->getRepository(\App\Entity\UserDetails::class)->findOneBy(['user' => $freshUser]);
+        if (!$details) {
+            $details = new \App\Entity\UserDetails();
+            $details->setUser($freshUser);
+            $freshUser->setUserDetails($details);
+            $em->persist($details);
+        }
+
+        if (isset($data['firstName'])) $details->setFirstName(trim($data['firstName']));
+        if (isset($data['lastName'])) $details->setLastName(trim($data['lastName']));
+        if (array_key_exists('phone', $data)) $details->setPhone($data['phone'] ? trim($data['phone']) : null);
+        if (array_key_exists('photo', $data)) $details->setPhoto($data['photo']);
+
+        $freshUser->setUserDetails($details);
+
+        if (array_key_exists('location', $data)) {
+            $candidate = $freshUser->getCandidateProfile();
+            if ($candidate) {
+                $candidate->setLocation($data['location'] ? trim($data['location']) : null);
+            }
+        }
+
+        $em->flush();
+
+        $fullName = trim(($details->getFirstName() ?? '') . ' ' . ($details->getLastName() ?? '')) ?: 'User';
+
+        if ($request->headers->get('X-Inertia')) {
+            $this->addFlash('success', 'Profile updated successfully!');
+            return $this->redirectToRoute('app_profile_settings');
+        }
+
+        return $this->json([
+            'success' => true,
+            'message' => 'Profile updated successfully!',
+            'user' => [
+                'fullName' => $fullName,
+                'name' => $fullName,
+                'photo' => $details->getPhoto(),
+            ],
+        ]);
+    }
+
+    #[Route('/change-password', name: 'app_profile_change_password', methods: ['POST'])]
+    public function changePassword(
+        Request $request,
+        EntityManagerInterface $em,
+        UserPasswordHasherInterface $passwordHasher
+    ): Response {
+        /** @var User|null $user */
+        $user = $this->getUser();
+        if (!$user) {
+            return $this->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $data = json_decode($request->getContent(), true) ?? $request->request->all();
+
+        $currentPassword = $data['currentPassword'] ?? '';
+        $newPassword = $data['newPassword'] ?? '';
+        $confirmPassword = $data['confirmPassword'] ?? ($data['newPasswordConfirmation'] ?? '');
+
+        // If user already has a password, verify current password
+        if (!empty($user->getPassword())) {
+            if (!$currentPassword) {
+                return $this->json(['error' => 'Current password is required.'], 422);
+            }
+            if (!$passwordHasher->isPasswordValid($user, $currentPassword)) {
+                return $this->json(['error' => 'The current password you entered is incorrect.'], 422);
+            }
+        }
+
+        if (!$newPassword || strlen($newPassword) < 6) {
+            return $this->json(['error' => 'New password must be at least 6 characters long.'], 422);
+        }
+
+        if ($newPassword !== $confirmPassword) {
+            return $this->json(['error' => 'New password and confirmation password do not match.'], 422);
+        }
+
+        $hashedPassword = $passwordHasher->hashPassword($user, $newPassword);
+        $user->setPassword($hashedPassword);
+        $em->flush();
+
+        return $this->json([
+            'success' => true,
+            'message' => 'Your password has been changed successfully!',
+        ]);
     }
 
     #[Route('/candidate/{id}', name: 'app_profile_candidate_admin', methods: ['GET'])]
@@ -355,21 +499,36 @@ class ProfileController extends AbstractController
             return $this->json(['error' => 'Conflict: Profile modified elsewhere'], 409);
         }
 
-        if (isset($data['firstName'])) $candidate->getUser()->getUserDetails()?->setFirstName($data['firstName']);
-        if (isset($data['lastName'])) $candidate->getUser()->getUserDetails()?->setLastName($data['lastName']);
+        $user = $candidate->getUser();
+        $details = $user->getUserDetails() ?? $em->getRepository(\App\Entity\UserDetails::class)->findOneBy(['user' => $user]);
+        if (!$details) {
+            $details = new \App\Entity\UserDetails();
+            $details->setUser($user);
+            $user->setUserDetails($details);
+            $em->persist($details);
+        }
+
+        if (isset($data['firstName'])) $details->setFirstName(trim($data['firstName']));
+        if (isset($data['lastName'])) $details->setLastName(trim($data['lastName']));
         if (isset($data['location'])) $candidate->setLocation($data['location']);
         if (array_key_exists('photo', $data)) {
-            $candidate->getUser()->getUserDetails()?->setPhoto($data['photo']);
+            $details->setPhoto($data['photo']);
         }
+        $user->setUserDetails($details);
+
         try {
             $em->flush();
         } catch (\Doctrine\ORM\OptimisticLockException $e) {
             return $this->json(['error' => 'Conflict: Profile modified elsewhere'], 409);
         }
 
+        $fullName = trim(($details->getFirstName() ?? '') . ' ' . ($details->getLastName() ?? '')) ?: 'User';
+
         return $this->json([
             'success' => true,
-            'version' => $candidate->getVersion()
+            'version' => $candidate->getVersion(),
+            'fullName' => $fullName,
+            'photo' => $details->getPhoto(),
         ]);
     }
 

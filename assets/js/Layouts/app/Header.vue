@@ -61,22 +61,43 @@ function submitSearch() {
     }
 }
 
+const liveUser = ref<{ name?: string; photo?: string } | null>(null);
+
+if (typeof window !== 'undefined') {
+    window.addEventListener('auth-user-updated', (event: any) => {
+        if (event.detail) {
+            liveUser.value = {
+                name: event.detail.fullName,
+                photo: event.detail.photo,
+            };
+        }
+    });
+}
+
+watch(() => page.props.auth, () => {
+    liveUser.value = null;
+});
+
+const userName = computed(() => {
+    return liveUser.value?.name || user.value?.user_detail?.fullname || user.value?.name || 'User';
+});
+
 const userAvatar = computed(() => {
     const u = user.value;
-    const img = u?.photo || u?.avatar || u?.user_detail?.image;
+    const img = liveUser.value?.photo !== undefined ? liveUser.value.photo : (u?.photo || u?.avatar || u?.user_detail?.image);
     if (img) {
         if (img.startsWith('http://') || img.startsWith('https://') || img.startsWith('data:')) {
             return img;
         }
         return '/storage/' + img;
     }
-    const name = encodeURIComponent(u?.name || u?.user_detail?.fullname || u?.email || 'User');
+    const name = encodeURIComponent(userName.value || u?.email || 'User');
     return `https://ui-avatars.com/api/?name=${name}&background=4361ee&color=fff&rounded=true&bold=true`;
 });
 
 const onAvatarError = (e: Event) => {
     const target = e.target as HTMLImageElement;
-    const name = encodeURIComponent(user.value?.name || user.value?.user_detail?.fullname || 'User');
+    const name = encodeURIComponent(userName.value || 'User');
     target.src = `https://ui-avatars.com/api/?name=${name}&background=4361ee&color=fff&rounded=true&bold=true`;
 };
 </script>
@@ -92,7 +113,7 @@ const onAvatarError = (e: Event) => {
                             :alt="settings?.title || 'VR'" />
                         <span
                             class="text-2xl ltr:ml-1.5 rtl:mr-1.5 font-semibold align-middle hidden md:inline dark:text-white-light transition-all duration-300">{{
-                            settings?.title || 'VR' }}</span>
+                                settings?.title || 'VR' }}</span>
                     </TextLink>
 
                     <a href="javascript:;"
@@ -182,8 +203,7 @@ const onAvatarError = (e: Event) => {
                             <button type="button"
                                 class="relative group block rounded-full focus:outline-none ring-2 ring-primary/20 hover:ring-primary transition">
                                 <img class="w-9 h-9 rounded-full object-cover border-2 border-primary/40 shadow-sm"
-                                    :src="userAvatar" @error="onAvatarError"
-                                    :alt="user?.user_detail?.fullname || user?.name || ''" />
+                                    :src="userAvatar" @error="onAvatarError" :alt="userName" />
                             </button>
                             <template #content="{ close }">
                                 <ul
@@ -193,12 +213,11 @@ const onAvatarError = (e: Event) => {
                                             class="flex items-center px-4 py-3.5 border-b border-gray-100 dark:border-gray-700/60">
                                             <div class="flex-none">
                                                 <img class="rounded-full w-10 h-10 object-cover border border-gray-200 dark:border-gray-600 shadow-xs"
-                                                    :src="userAvatar" @error="onAvatarError"
-                                                    :alt="user?.user_detail?.fullname || user?.name || ''" />
+                                                    :src="userAvatar" @error="onAvatarError" :alt="userName" />
                                             </div>
                                             <div class="ltr:pl-3 rtl:pr-3 truncate">
                                                 <h4 class="text-sm font-bold text-gray-900 dark:text-white truncate">
-                                                    {{ user?.user_detail?.fullname || user?.name || 'User' }}
+                                                    {{ userName }}
                                                 </h4>
                                                 <div class="text-xs text-gray-500 dark:text-gray-400 truncate">{{
                                                     user?.email }}</div>
@@ -211,8 +230,8 @@ const onAvatarError = (e: Event) => {
                                                     }">
                                                     {{ user?.roleName ? __(user.roleName) :
                                                         (user?.roles?.includes('ROLE_ADMIN') ? __('Admin') :
-                                                    (user?.roles?.includes('ROLE_RECRUITER') ? __('Recruiter') :
-                                                    __('Candidate'))) }}
+                                                            (user?.roles?.includes('ROLE_RECRUITER') ? __('Recruiter') :
+                                                                __('Candidate'))) }}
                                                 </span>
                                             </div>
                                         </div>
@@ -223,7 +242,17 @@ const onAvatarError = (e: Event) => {
                                             @click="close()">
                                             <icon-user
                                                 class="w-4.5 h-4.5 ltr:mr-2.5 rtl:ml-2.5 shrink-0 text-gray-500" />
-                                            {{ __('Profile') }}
+                                            {{ __('My Profile') }}
+                                        </TextLink>
+                                    </li>
+                                    <li
+                                        v-if="user?.roles?.includes('ROLE_ADMIN') || user?.roles?.includes('ROLE_RECRUITER')">
+                                        <TextLink :href="route('app_profile_settings')"
+                                            class="dark:hover:text-white flex items-center px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-700/40"
+                                            @click="close()">
+                                            <icon-user
+                                                class="w-4.5 h-4.5 ltr:mr-2.5 rtl:ml-2.5 shrink-0 text-blue-500" />
+                                            {{ __('Account Settings') }}
                                         </TextLink>
                                     </li>
                                     <li v-if="user?.roles?.includes('ROLE_ADMIN')">
@@ -249,10 +278,12 @@ const onAvatarError = (e: Event) => {
 
                     <!-- Guest login buttons if unauthenticated -->
                     <div v-else class="flex items-center gap-2">
-                        <TextLink :href="route('app_login')" class="btn btn-outline-primary btn-sm text-xs px-3 py-1.5 rounded-lg">
+                        <TextLink :href="route('app_login')"
+                            class="btn btn-outline-primary btn-sm text-xs px-3 py-1.5 rounded-lg">
                             {{ __('Log In') }}
                         </TextLink>
-                        <TextLink :href="route('app_register')" class="btn btn-primary btn-sm text-xs px-3 py-1.5 rounded-lg">
+                        <TextLink :href="route('app_register')"
+                            class="btn btn-primary btn-sm text-xs px-3 py-1.5 rounded-lg">
                             {{ __('Sign Up') }}
                         </TextLink>
                     </div>
