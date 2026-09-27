@@ -43,7 +43,12 @@ const submit = () => {
 <template>
 
     <Head title="Log in" />
-    <div v-if="error" class="p-3.5 mb-5 text-sm font-medium text-red-700 bg-red-100 rounded-lg dark:bg-red-900/40 dark:text-red-300 border border-red-200 dark:border-red-800">
+    <div v-if="status"
+        class="p-3.5 mb-5 text-sm font-medium text-green-700 bg-green-100 rounded-lg dark:bg-green-900/40 dark:text-green-300 border border-green-200 dark:border-green-800">
+        {{ status }}
+    </div>
+    <div v-if="error"
+        class="p-3.5 mb-5 text-sm font-medium text-red-700 bg-red-100 rounded-lg dark:bg-red-900/40 dark:text-red-300 border border-red-200 dark:border-red-800">
         {{ error }}
     </div>
     <form @submit.prevent="submit" class="space-y-5 dark:text-white">
@@ -62,10 +67,14 @@ const submit = () => {
             </InputWithIcon>
             <InputError :message="form.errors.password" />
         </div>
-        <div>
+        <div class="flex items-center justify-between">
             <Checkbox v-model="form.remember">
                 <span class="text-white-dark">{{ __('Remember me') }}</span>
             </Checkbox>
+            <TextLink v-if="canResetPassword" :href="route('password.request')"
+                class="font-bold transition text-[#7c3aed] hover:text-[#e1147b] dark:text-[#a855f7] text-sm">
+                {{ __('Forgot Password?') }}
+            </TextLink>
         </div>
         <Button type="submit" :disabled="form.processing"
             class="btn !mt-6 w-full border-0 uppercase font-bold text-white bg-gradient-to-r from-[#e1147b] via-[#9c27b0] to-[#601bf9] hover:opacity-95 shadow-[0_10px_20px_-10px_rgba(225,20,123,0.5)] py-3 rounded-lg transition duration-200">

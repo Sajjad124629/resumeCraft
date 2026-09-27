@@ -98,11 +98,20 @@ const submit = () => {
             </a>
         </div>
     </form>
-    <div class="text-center dark:text-white mt-6 text-sm">
-        {{ __("Already have an account?") }}
-        <TextLink :href="route('app_login')"
-            class="font-bold uppercase transition text-[#7c3aed] hover:text-[#e1147b] dark:text-[#a855f7] ml-1">{{
-                __('SIGN IN') }}
-        </TextLink>
+    <div class="text-center dark:text-white mt-6 text-sm space-y-2">
+        <div>
+            {{ __("Already have an account?") }}
+            <TextLink :href="route('app_login')"
+                class="font-bold uppercase transition text-[#7c3aed] hover:text-[#e1147b] dark:text-[#a855f7] ml-1">{{
+                    __('SIGN IN') }}
+            </TextLink>
+        </div>
+        <div>
+            {{ __("Forgot your password?") }}
+            <TextLink :href="route('password.request')"
+                class="font-bold uppercase transition text-[#7c3aed] hover:text-[#e1147b] dark:text-[#a855f7] ml-1">{{
+                    __('RESET IT HERE') }}
+            </TextLink>
+        </div>
     </div>
 </template>

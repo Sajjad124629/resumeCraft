@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import TextLink from '@/components/TextLink.vue';
+import TextLink from '@/Components/TextLink.vue';
 import { usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 interface Settings {
@@ -59,6 +59,22 @@ const settings = computed(() => page.props.settings as Settings);
                             </h1>
                             <p class="text-base font-bold leading-normal text-white-dark">Enter your email and password
                                 to login</p>
+                        </div>
+                        <div class="mb-10"
+                            v-else-if="route().current('password.request') || route().current('/forgot-password')">
+                            <h1 class="text-3xl font-extrabold uppercase !leading-snug text-primary md:text-4xl">Reset
+                                Password
+                            </h1>
+                            <p class="text-base font-bold leading-normal text-white-dark">Enter your email to receive a
+                                password reset link</p>
+                        </div>
+                        <div class="mb-10"
+                            v-else-if="route().current('password.reset') || route().current('/reset-password')">
+                            <h1 class="text-3xl font-extrabold uppercase !leading-snug text-primary md:text-4xl">New
+                                Password
+                            </h1>
+                            <p class="text-base font-bold leading-normal text-white-dark">Enter your new password below
+                            </p>
                         </div>
                         <div class="mb-10" v-else>
                             <h1 class="text-3xl font-extrabold uppercase !leading-snug text-primary md:text-4xl">Sign UP

@@ -11,6 +11,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
@@ -198,10 +199,143 @@ class AuthController extends AbstractController
         return $this->getUser() ? $this->redirectToRoute('app_dashboard') : $this->redirectToRoute('app_login');
     }
 
-    #[Route('/forgot-password', name: 'password.request', methods: ['GET', 'POST'])]
+    #[Route('/forgot-password', name: 'password.request', methods: ['GET'])]
     public function forgotPassword(InertiaService $inertia): Response
     {
+        if ($this->getUser()) {
+            return $this->redirectToRoute('app_dashboard');
+        }
+
         return $inertia->render('auth/ForgotPassword');
+    }
+
+    #[Route('/forgot-password', name: 'password.email', methods: ['POST'])]
+    public function sendResetLinkEmail(
+        Request $request,
+        EntityManagerInterface $entityManager,
+        MailerInterface $mailer,
+        InertiaService $inertia
+    ): Response {
+        $data = json_decode($request->getContent(), true) ?? $request->request->all();
+        $email = trim($data['email'] ?? '');
+
+        if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return $inertia->render('auth/ForgotPassword', [
+                'errors' => ['email' => 'Please enter a valid email address.']
+            ]);
+        }
+
+        $user = $entityManager->getRepository(User::class)->findOneBy(['email' => $email]);
+
+        if ($user) {
+            $token = bin2hex(random_bytes(32));
+            $user->setResetToken($token);
+            $user->setResetTokenExpiresAt(new \DateTimeImmutable('+1 hour'));
+            $entityManager->flush();
+
+            $resetUrl = $this->generateUrl('password.reset', [
+                'token' => $token,
+                'email' => $user->getEmail(),
+            ], UrlGeneratorInterface::ABSOLUTE_URL);
+
+            $userName = $user->getUserDetails()?->getFirstName() ?: 'there';
+
+            try {
+                $fromAddress = $_ENV['MAIL_FROM_ADDRESS'] ?? 'sajjadhossainridoy83@gmail.com';
+                $fromName = $_ENV['MAIL_FROM_NAME'] ?? 'ResumeCraft';
+
+                $emailMessage = (new TemplatedEmail())
+                    ->from(new Address($fromAddress, $fromName))
+                    ->to($user->getEmail())
+                    ->subject('Reset your Password - ResumeCraft')
+                    ->htmlTemplate('emails/reset_password.html.twig')
+                    ->context([
+                        'userName' => $userName,
+                        'resetUrl' => $resetUrl,
+                    ]);
+
+                $mailer->send($emailMessage);
+            } catch (\Throwable $e) {
+                error_log('Mailer error during password reset: ' . $e->getMessage());
+            }
+        }
+
+        return $inertia->render('auth/ForgotPassword', [
+            'status' => 'If an account exists with that email, we have sent a password reset link!',
+        ]);
+    }
+
+    #[Route('/reset-password/{token}', name: 'password.reset', methods: ['GET'])]
+    public function resetPassword(
+        string $token,
+        Request $request,
+        EntityManagerInterface $entityManager,
+        InertiaService $inertia
+    ): Response {
+        if ($this->getUser()) {
+            return $this->redirectToRoute('app_dashboard');
+        }
+
+        $user = $entityManager->getRepository(User::class)->findOneBy(['resetToken' => $token]);
+
+        if (!$user || !$user->getResetTokenExpiresAt() || $user->getResetTokenExpiresAt() < new \DateTimeImmutable()) {
+            $this->addFlash('error', 'This password reset link is invalid or has expired. Please request a new one.');
+            return $this->redirectToRoute('password.request');
+        }
+
+        $email = $request->query->get('email', '') ?: $user->getEmail();
+
+        return $inertia->render('auth/ResetPassword', [
+            'token' => $token,
+            'email' => $email,
+        ]);
+    }
+
+    #[Route('/reset-password', name: 'password.store', methods: ['POST'])]
+    public function storeResetPassword(
+        Request $request,
+        EntityManagerInterface $entityManager,
+        UserPasswordHasherInterface $userPasswordHasher,
+        InertiaService $inertia
+    ): Response {
+        $data = json_decode($request->getContent(), true) ?? $request->request->all();
+
+        $token = trim($data['token'] ?? '');
+        $email = trim($data['email'] ?? '');
+        $password = $data['password'] ?? '';
+        $passwordConfirmation = $data['password_confirmation'] ?? '';
+
+        $user = $entityManager->getRepository(User::class)->findOneBy(['resetToken' => $token]);
+
+        if (!$user || !$user->getResetTokenExpiresAt() || $user->getResetTokenExpiresAt() < new \DateTimeImmutable()) {
+            $this->addFlash('error', 'This password reset link is invalid or has expired. Please request a new one.');
+            return $this->redirectToRoute('password.request');
+        }
+
+        $errors = [];
+        if (!$password || strlen($password) < 6) {
+            $errors['password'] = 'Password must be at least 6 characters.';
+        }
+
+        if ($password !== $passwordConfirmation) {
+            $errors['password_confirmation'] = 'The password confirmation does not match.';
+        }
+
+        if (!empty($errors)) {
+            return $inertia->render('auth/ResetPassword', [
+                'token' => $token,
+                'email' => $email ?: $user->getEmail(),
+                'errors' => $errors,
+            ]);
+        }
+
+        $user->setPassword($userPasswordHasher->hashPassword($user, $password));
+        $user->setResetToken(null);
+        $user->setResetTokenExpiresAt(null);
+        $entityManager->flush();
+
+        $this->addFlash('success', 'Your password has been reset successfully! You can now sign in.');
+        return $this->redirectToRoute('app_login');
     }
 
     #[Route('/logout', name: 'app_logout')]

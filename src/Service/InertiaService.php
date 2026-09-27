@@ -2,9 +2,14 @@
 
 namespace App\Service;
 
+use App\Entity\User;
+use App\Entity\UserDetails;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Session\FlashBagAwareSessionInterface;
 use Symfony\Component\Routing\RouterInterface;
 use Twig\Environment;
 
@@ -14,8 +19,8 @@ class InertiaService
         private RequestStack $requestStack,
         private Environment $twig,
         private RouterInterface $router,
-        private \Symfony\Bundle\SecurityBundle\Security $security,
-        private \Doctrine\ORM\EntityManagerInterface $em,
+        private Security $security,
+        private EntityManagerInterface $em,
         private string $rootView = 'app.html.twig',
         private array $sharedProps = []
     ) {}
@@ -43,9 +48,9 @@ class InertiaService
 
         $user = $this->security->getUser();
         $authProp = null;
-        if ($user instanceof \App\Entity\User) {
-            /** @var \App\Entity\User|null $freshUser */
-            $freshUser = $this->em->find(\App\Entity\User::class, $user->getId());
+        if ($user instanceof User) {
+            /** @var User|null $freshUser */
+            $freshUser = $this->em->find(User::class, $user->getId());
             if ($freshUser) {
                 try {
                     $this->em->refresh($freshUser);
@@ -54,7 +59,7 @@ class InertiaService
                 $user = $freshUser;
             }
 
-            $userDetails = $user->getUserDetails() ?? $this->em->getRepository(\App\Entity\UserDetails::class)->findOneBy(['user' => $user]);
+            $userDetails = $user->getUserDetails() ?? $this->em->getRepository(UserDetails::class)->findOneBy(['user' => $user]);
             if ($userDetails) {
                 try {
                     $this->em->refresh($userDetails);
@@ -102,7 +107,7 @@ class InertiaService
         $flashProp = [];
         if ($request && $request->hasSession()) {
             $session = $request->getSession();
-            if ($session instanceof \Symfony\Component\HttpFoundation\Session\FlashBagAwareSessionInterface) {
+            if ($session instanceof FlashBagAwareSessionInterface) {
                 $flashBag = $session->getFlashBag();
                 $allFlashes = $flashBag->all();
                 if (!empty($allFlashes)) {

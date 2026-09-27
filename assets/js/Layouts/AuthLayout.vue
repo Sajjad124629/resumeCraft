@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import AuthCoverLayout from '@/layouts/auth/AuthCoverLayout.vue';
-import MainLoader from '@/components/icon/MainLoader.vue';
-import NavigateTop from '@/components/NavigateTop.vue';
-import { useAppStore } from '@/stores/index'
+import AuthCoverLayout from '@/Layouts/auth/AuthCoverLayout.vue';
+import MainLoader from '@/Components/icon/MainLoader.vue';
+import NavigateTop from '@/Components/NavigateTop.vue';
+import { useAppStore } from '@/Stores/index'
 import { onMounted, } from 'vue';
 const store = useAppStore();
 
 onMounted(() => {
-        store.toggleMainLoader()
+    store.toggleMainLoader()
 })
 </script>
 
