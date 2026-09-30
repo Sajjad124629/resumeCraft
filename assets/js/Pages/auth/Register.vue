@@ -17,6 +17,7 @@ import { route } from '@/route';
 const form = useForm({
     name: '',
     email: '',
+    role: 'ROLE_CANDIDATE',
     password: '',
     password_confirmation: '',
     terms: false,
@@ -35,6 +36,30 @@ const submit = () => {
 
     <Head title="Register" />
     <form @submit.prevent="submit" class="space-y-5 dark:text-white">
+        <div>
+            <Label :isRequired="true">{{ __('I want to register as') }}</Label>
+            <div class="grid grid-cols-2 gap-3 mt-1.5">
+                <button
+                    type="button"
+                    @click="form.role = 'ROLE_CANDIDATE'"
+                    class="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-sm font-semibold transition-all duration-200 cursor-pointer"
+                    :class="form.role === 'ROLE_CANDIDATE' ? 'border-[#e1147b] bg-[#e1147b]/10 text-[#e1147b] shadow-sm font-bold ring-1 ring-[#e1147b]' : 'border-gray-200 dark:border-gray-700 hover:border-gray-400 text-gray-600 dark:text-gray-300 bg-gray-50/50 dark:bg-gray-800/50'"
+                >
+                    <span class="text-base">👨‍💼</span>
+                    <span>{{ __('Candidate') }}</span>
+                </button>
+                <button
+                    type="button"
+                    @click="form.role = 'ROLE_RECRUITER'"
+                    class="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-sm font-semibold transition-all duration-200 cursor-pointer"
+                    :class="form.role === 'ROLE_RECRUITER' ? 'border-[#7c3aed] bg-[#7c3aed]/10 text-[#7c3aed] shadow-sm font-bold ring-1 ring-[#7c3aed]' : 'border-gray-200 dark:border-gray-700 hover:border-gray-400 text-gray-600 dark:text-gray-300 bg-gray-50/50 dark:bg-gray-800/50'"
+                >
+                    <span class="text-base">🏢</span>
+                    <span>{{ __('Recruiter') }}</span>
+                </button>
+            </div>
+        </div>
+
         <div>
             <Label for="name" :isRequired="true">Name</Label>
             <InputWithIcon v-model.trim="form.name" type="text" placeholder="Full name" autocomplete="name" required>

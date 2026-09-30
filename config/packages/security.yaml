@@ -25,6 +25,12 @@ security:
                 password_parameter: password
                 enable_csrf: false
                 default_target_path: app_dashboard
+            remember_me:
+                secret: '%kernel.secret%'
+                lifetime: 2592000 # 30 days in seconds
+                path: /
+                always_remember_me: false
+                signature_properties: ['password']
             custom_authenticator:
                 - App\Security\GoogleAuthenticator
                 - App\Security\FacebookAuthenticator

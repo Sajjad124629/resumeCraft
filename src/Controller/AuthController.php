@@ -102,13 +102,11 @@ class AuthController extends AbstractController
             );
             $user->setIsVerified(false);
 
-            $roleCandidate = $entityManager->getRepository(\App\Entity\Role::class)->findOneBy(['slug' => 'ROLE_CANDIDATE']);
-            if ($roleCandidate) {
-                $user->setRole($roleCandidate);
+            $requestedRole = ($data['role'] ?? 'ROLE_CANDIDATE') === 'ROLE_RECRUITER' ? 'ROLE_RECRUITER' : 'ROLE_CANDIDATE';
+            $selectedRole = $entityManager->getRepository(\App\Entity\Role::class)->findOneBy(['slug' => $requestedRole]);
+            if ($selectedRole) {
+                $user->setRole($selectedRole);
             }
-
-            $profile = new CandidateProfile();
-            $profile->setUser($user);
 
             $details = new \App\Entity\UserDetails();
             $details->setUser($user);
@@ -117,8 +115,14 @@ class AuthController extends AbstractController
             $details->setLastName($nameParts[1] ?? '');
 
             $entityManager->persist($user);
-            $entityManager->persist($profile);
             $entityManager->persist($details);
+
+            if ($requestedRole === 'ROLE_CANDIDATE') {
+                $profile = new CandidateProfile();
+                $profile->setUser($user);
+                $entityManager->persist($profile);
+            }
+
             $entityManager->flush();
 
             // Send Verification Email with beautiful HTML template

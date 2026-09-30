@@ -11,6 +11,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 /**
  * @method User|null getUser()
@@ -19,6 +20,66 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('ROLE_ADMIN')]
 class AdminController extends AbstractController
 {
+    #[Route('/users/create', name: 'app_admin_user_create', methods: ['POST'])]
+    public function createUser(
+        Request $request,
+        EntityManagerInterface $em,
+        UserPasswordHasherInterface $passwordHasher
+    ): Response {
+        $data = json_decode($request->getContent(), true) ?? $request->request->all();
+
+        $email = trim($data['email'] ?? '');
+        $password = $data['password'] ?? '';
+        $firstName = trim($data['firstName'] ?? '');
+        $lastName = trim($data['lastName'] ?? '');
+        $roleSlug = $data['roleSlug'] ?? 'ROLE_CANDIDATE';
+
+        if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $this->addFlash('error', 'Valid email address is required.');
+            return $this->redirectToRoute('app_admin_users');
+        }
+
+        if (!$password || strlen($password) < 6) {
+            $this->addFlash('error', 'Password must be at least 6 characters.');
+            return $this->redirectToRoute('app_admin_users');
+        }
+
+        $existingUser = $em->getRepository(User::class)->findOneBy(['email' => $email]);
+        if ($existingUser) {
+            $this->addFlash('error', 'An account with this email already exists.');
+            return $this->redirectToRoute('app_admin_users');
+        }
+
+        $role = $em->getRepository(Role::class)->findOneBy(['slug' => $roleSlug]);
+        if (!$role) {
+            $this->addFlash('error', 'Invalid role selected.');
+            return $this->redirectToRoute('app_admin_users');
+        }
+
+        $user = new User();
+        $user->setEmail($email);
+        $user->setPassword($passwordHasher->hashPassword($user, $password));
+        $user->setRole($role);
+        $user->setIsVerified(true);
+
+        $details = new \App\Entity\UserDetails();
+        $details->setUser($user);
+        $details->setFirstName($firstName ?: explode('@', $email)[0]);
+        $details->setLastName($lastName);
+        $em->persist($details);
+
+        if ($roleSlug === 'ROLE_CANDIDATE') {
+            $candidateProfile = new \App\Entity\CandidateProfile();
+            $candidateProfile->setUser($user);
+            $em->persist($candidateProfile);
+        }
+
+        $em->persist($user);
+        $em->flush();
+
+        $this->addFlash('success', "User {$email} created successfully as {$role->getName()}.");
+        return $this->redirectToRoute('app_admin_users');
+    }
     #[Route('/users', name: 'app_admin_users', methods: ['GET'])]
     public function users(Request $request, InertiaService $inertia, EntityManagerInterface $em): Response
     {

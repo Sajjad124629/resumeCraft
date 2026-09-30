@@ -33,7 +33,10 @@ defineOptions({
 });
 
 const submit = () => {
-    form.post(route('app_login'), {
+    form.transform((data) => ({
+        ...data,
+        _remember_me: data.remember ? 'on' : '',
+    })).post(route('app_login'), {
         forceFormData: true,
         onFinish: () => form.reset('password'),
     });

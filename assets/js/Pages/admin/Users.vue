@@ -11,7 +11,9 @@ import {
     Delete01Icon, 
     SecurityBlockIcon, 
     PencilEdit02Icon,
-    Search01Icon
+    Search01Icon,
+    PlusSignIcon,
+    Cancel01Icon
 } from '@hugeicons/core-free-icons';
 
 defineOptions({ layout: AppLayout });
@@ -36,6 +38,39 @@ const searchQuery = ref(props.search || '');
 const sortColumn = ref(props.sort || 'id');
 const sortDirection = ref(props.sortDir || 'desc');
 const selectedRole = ref<string>('ROLE_CANDIDATE');
+
+const showCreateModal = ref(false);
+const isSubmittingCreate = ref(false);
+const createForm = ref({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    roleSlug: 'ROLE_CANDIDATE',
+});
+
+function submitCreateUser() {
+    if (!createForm.value.email || !createForm.value.password) {
+        alert('Email and Password are required.');
+        return;
+    }
+    isSubmittingCreate.value = true;
+    router.post(route('app_admin_user_create'), createForm.value, {
+        onSuccess: () => {
+            showCreateModal.value = false;
+            createForm.value = {
+                firstName: '',
+                lastName: '',
+                email: '',
+                password: '',
+                roleSlug: 'ROLE_CANDIDATE',
+            };
+        },
+        onFinish: () => {
+            isSubmittingCreate.value = false;
+        }
+    });
+}
 
 let searchTimer: any = null;
 
@@ -231,6 +266,15 @@ function deleteSelected() {
                         <HugeiconsIcon :icon="Delete01Icon" :size="13" color="currentColor" /> {{ __('Delete') }}
                     </Button>
                 </div>
+
+                <!-- Add User Button -->
+                <Button 
+                    size="sm" 
+                    class="bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-700 !text-white font-bold shadow-[0_4px_14px_rgba(67,97,238,0.35)] rounded-xl px-4 py-2 flex items-center gap-1.5 cursor-pointer"
+                    @click="showCreateModal = true"
+                >
+                    <HugeiconsIcon :icon="PlusSignIcon" :size="16" color="currentColor" /> {{ __('Add User') }}
+                </Button>
             </div>
         </div>
 
@@ -322,6 +366,61 @@ function deleteSelected() {
                         <span v-else class="text-xs text-gray-400">{{ __('None') }}</span>
                     </template>
                 </Vue3Datatable>
+            </div>
+        </div>
+
+        <!-- Create User Modal -->
+        <div v-if="showCreateModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+            <div class="bg-white dark:bg-[#0e1726] rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-800 w-full max-w-md p-6 space-y-5">
+                <div class="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
+                    <h4 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                        <span class="inline-block w-2 h-5 rounded-full bg-primary"></span>
+                        {{ __('Add New User') }}
+                    </h4>
+                    <button type="button" @click="showCreateModal = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition cursor-pointer">
+                        <HugeiconsIcon :icon="Cancel01Icon" :size="18" />
+                    </button>
+                </div>
+
+                <form @submit.prevent="submitCreateUser" class="space-y-4">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ __('First Name') }}</label>
+                            <input type="text" v-model.trim="createForm.firstName" class="form-input text-xs w-full rounded-xl border-gray-200 dark:border-gray-700" placeholder="John" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ __('Last Name') }}</label>
+                            <input type="text" v-model.trim="createForm.lastName" class="form-input text-xs w-full rounded-xl border-gray-200 dark:border-gray-700" placeholder="Doe" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ __('Email Address') }} <span class="text-red-500">*</span></label>
+                        <input type="email" v-model.trim="createForm.email" required class="form-input text-xs w-full rounded-xl border-gray-200 dark:border-gray-700" placeholder="user@example.com" />
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ __('Password') }} <span class="text-red-500">*</span></label>
+                        <input type="password" v-model="createForm.password" required minlength="6" class="form-input text-xs w-full rounded-xl border-gray-200 dark:border-gray-700" placeholder="Minimum 6 characters" />
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ __('Role') }} <span class="text-red-500">*</span></label>
+                        <select v-model="createForm.roleSlug" class="form-select text-xs w-full rounded-xl border-gray-200 dark:border-gray-700">
+                            <option v-for="r in roles" :key="r.id" :value="r.slug">{{ __(r.name) }}</option>
+                        </select>
+                    </div>
+
+                    <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-gray-100 dark:border-gray-800">
+                        <Button type="button" variant="outline" size="sm" class="rounded-xl text-xs" @click="showCreateModal = false">
+                            {{ __('Cancel') }}
+                        </Button>
+                        <Button type="submit" size="sm" :disabled="isSubmittingCreate" class="bg-primary hover:bg-primary/90 text-white font-bold rounded-xl text-xs px-4">
+                            <span v-if="isSubmittingCreate">{{ __('Creating...') }}</span>
+                            <span v-else>{{ __('Create User') }}</span>
+                        </Button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
