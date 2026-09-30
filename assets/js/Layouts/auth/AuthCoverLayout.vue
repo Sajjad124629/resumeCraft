@@ -35,7 +35,7 @@ const settings = computed(() => page.props.settings as Settings);
                         class="absolute inset-y-0 w-8 from-primary/10 via-transparent to-transparent ltr:-right-10 ltr:bg-gradient-to-r rtl:-left-10 rtl:bg-gradient-to-l xl:w-16 ltr:xl:-right-20 rtl:xl:-left-20">
                     </div>
                     <div class="ltr:xl:-skew-x-[14deg] rtl:xl:skew-x-[14deg]">
-                        <TextLink :href="route('app_dashboard')" class="w-48 block lg:w-72 ms-10 flex items-center">
+                        <TextLink :href="route('app_home')" class="w-48 block lg:w-72 ms-10 flex items-center">
                             <img :src="settings.logo ? '/storage/' + settings.logo : '/assets/images/logo.svg'"
                                 :alt="settings.title" class="w-[100px]" />
                             <h1 class="text-white dark:text-white text-3xl font-extrabold"> {{ settings.title }}</h1>
@@ -85,7 +85,7 @@ const settings = computed(() => page.props.settings as Settings);
                         <slot />
                     </div>
                     <p class="absolute bottom-6 w-full text-center dark:text-white">© {{ new Date().getFullYear()
-                    }}.SAJJAD All Rights Reserved.</p>
+                        }}.SAJJAD All Rights Reserved.</p>
                 </div>
             </div>
         </div>
