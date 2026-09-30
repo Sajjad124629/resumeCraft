@@ -15,4 +15,26 @@ class ProjectRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Project::class);
     }
+
+    /**
+     * Get unique project tags
+     */
+    public function getTags(int $limit = 20): array
+    {
+        $rows = $this->createQueryBuilder('p')
+            ->select('p.tags')
+            ->where('p.tags IS NOT NULL')
+            ->getQuery()
+            ->getArrayResult();
+
+        $tags = [];
+        foreach ($rows as $row) {
+            if (!empty($row['tags']) && is_array($row['tags'])) {
+                $tags = array_merge($tags, $row['tags']);
+            }
+        }
+        $tagCounts = array_count_values($tags);
+        arsort($tagCounts);
+        return array_slice(array_keys($tagCounts), 0, $limit);
+    }
 }

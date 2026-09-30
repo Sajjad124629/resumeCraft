@@ -202,11 +202,10 @@ defineProps<{
                     <p class="text-xs text-gray-500 mb-6">Click any technology to search matching candidates and positions</p>
                     <div v-if="tagCloud.length === 0" class="text-gray-500 text-sm">Not enough data to generate tag cloud.</div>
                     <div class="flex flex-wrap justify-center gap-3">
-                        <Link v-for="item in tagCloud" :key="item.tag" 
-                              :href="route('app_search', { q: item.tag })"
-                              class="px-3 py-1.5 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 transition hover:bg-blue-100 dark:hover:bg-blue-900/60 font-medium"
-                              :style="{ fontSize: `${Math.max(0.8, Math.min(1.4, 0.8 + (item.count * 0.08)))}rem`, opacity: Math.max(0.65, Math.min(1, 0.45 + (item.count * 0.15))) }">
-                            #{{ item.tag }}
+                        <Link v-for="tag in tagCloud" :key="tag" 
+                              :href="route('app_search', { q: tag })"
+                              class="px-4 py-2 rounded-xl text-sm font-semibold border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 transition hover:bg-blue-100 dark:hover:bg-blue-900/60 shadow-sm">
+                            #{{ tag }}
                         </Link>
                     </div>
                 </div>

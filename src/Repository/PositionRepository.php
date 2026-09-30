@@ -15,4 +15,25 @@ class PositionRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Position::class);
     }
+    public function findLatestSummary(int $limit = 5): array
+    {
+        return $this->createQueryBuilder('p')
+            ->select('p.id', 'p.title', 'p.company', 'p.level')
+            ->orderBy('p.id', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getArrayResult();
+    }
+
+    public function findPopularSummary(int $limit = 5): array
+    {
+        return $this->createQueryBuilder('p')
+            ->leftJoin('p.cvs', 'c')
+            ->select('p.id', 'p.title', 'p.company', 'COUNT(c.id) AS cvCount')
+            ->groupBy('p.id')
+            ->orderBy('cvCount', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getArrayResult();
+    }
 }
