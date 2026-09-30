@@ -2,9 +2,10 @@
 
 namespace App\Entity;
 
+use App\Repository\DiscussionPostRepository;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity]
+#[ORM\Entity(repositoryClass: DiscussionPostRepository::class)]
 class DiscussionPost
 {
     #[ORM\Id]

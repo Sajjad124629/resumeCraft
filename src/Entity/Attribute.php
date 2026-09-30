@@ -2,11 +2,12 @@
 
 namespace App\Entity;
 
+use App\Repository\AttributeRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity]
+#[ORM\Entity(repositoryClass: AttributeRepository::class)]
 class Attribute
 {
     #[ORM\Id]

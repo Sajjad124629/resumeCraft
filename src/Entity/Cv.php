@@ -2,11 +2,12 @@
 
 namespace App\Entity;
 
+use App\Repository\CvRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity]
+#[ORM\Entity(repositoryClass: CvRepository::class)]
 class Cv
 {
     #[ORM\Id]

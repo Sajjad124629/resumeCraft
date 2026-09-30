@@ -2,9 +2,10 @@
 
 namespace App\Entity;
 
+use App\Repository\UserDetailsRepository;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity]
+#[ORM\Entity(repositoryClass: UserDetailsRepository::class)]
 class UserDetails
 {
     #[ORM\Id]

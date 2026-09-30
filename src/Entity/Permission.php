@@ -2,9 +2,10 @@
 
 namespace App\Entity;
 
+use App\Repository\PermissionRepository;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity]
+#[ORM\Entity(repositoryClass: PermissionRepository::class)]
 class Permission
 {
     #[ORM\Id]

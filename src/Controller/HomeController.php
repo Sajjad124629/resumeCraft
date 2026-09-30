@@ -20,7 +20,7 @@ class HomeController extends AbstractController
         // 1. Statistics
         $totalPositions = $em->getRepository(Position::class)->count([]);
         $totalCvs = $em->getRepository(Cv::class)->count([]);
-        
+
         // Count roles
         $users = $em->getRepository(User::class)->findAll();
         $totalCandidates = 0;
@@ -34,12 +34,7 @@ class HomeController extends AbstractController
         // CVs last 24 hours
         $yesterday = new \DateTime('-24 hours');
         $cvsLast24h = $em->getRepository(Cv::class)
-            ->createQueryBuilder('c')
-            ->select('COUNT(c.id)')
-            ->where('c.createdAt >= :yesterday')
-            ->setParameter('yesterday', $yesterday)
-            ->getQuery()
-            ->getSingleScalarResult();
+            ->countCvsSince($yesterday);
 
         $stats = [
             'totalPositions' => $totalPositions,
@@ -68,7 +63,7 @@ class HomeController extends AbstractController
             ->setMaxResults(5)
             ->getQuery()
             ->getResult();
-            
+
         $popularPositionsData = array_map(fn($item) => [
             'id' => $item['position']->getId(),
             'title' => $item['position']->getTitle(),

@@ -2,9 +2,10 @@
 
 namespace App\Entity;
 
+use App\Repository\PositionAccessRuleRepository;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity]
+#[ORM\Entity(repositoryClass: PositionAccessRuleRepository::class)]
 class PositionAccessRule
 {
     #[ORM\Id]

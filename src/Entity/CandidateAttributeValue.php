@@ -2,9 +2,10 @@
 
 namespace App\Entity;
 
+use App\Repository\CandidateAttributeValueRepository;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity]
+#[ORM\Entity(repositoryClass: CandidateAttributeValueRepository::class)]
 class CandidateAttributeValue
 {
     #[ORM\Id]

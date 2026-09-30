@@ -2,9 +2,10 @@
 
 namespace App\Entity;
 
+use App\Repository\CvLikeRepository;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity]
+#[ORM\Entity(repositoryClass: CvLikeRepository::class)]
 #[ORM\UniqueConstraint(name: 'recruiter_cv_like', columns: ['cv_id', 'recruiter_id'])]
 class CvLike
 {
