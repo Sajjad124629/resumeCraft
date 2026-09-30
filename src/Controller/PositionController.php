@@ -438,7 +438,7 @@ class PositionController extends AbstractController
             foreach ($attributes as $attr) {
                 $headers[] = $attr->getName();
             }
-            fputcsv($handle, $headers);
+            fputcsv($handle, $headers, ',', '"', '\\');
 
             // Data Rows (no DB queries inside loop)
             foreach ($cvs as $cv) {
@@ -455,7 +455,7 @@ class PositionController extends AbstractController
                     $row[] = $valueMap[$cid][$attr->getId()] ?? '';
                 }
 
-                fputcsv($handle, $row);
+                fputcsv($handle, $row, ',', '"', '\\');
             }
 
             fclose($handle);

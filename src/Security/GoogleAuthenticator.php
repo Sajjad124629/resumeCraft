@@ -115,7 +115,7 @@ class GoogleAuthenticator extends OAuth2Authenticator implements AuthenticationE
         return new RedirectResponse($this->router->generate('app_login'));
     }
 
-    public function start(Request $request, AuthenticationException $authException = null): Response
+    public function start(Request $request, ?AuthenticationException $authException = null): Response
     {
         return new RedirectResponse(
             '/login',
@@ -123,3 +123,4 @@ class GoogleAuthenticator extends OAuth2Authenticator implements AuthenticationE
         );
     }
 }
+

@@ -20,10 +20,55 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class AdminController extends AbstractController
 {
     #[Route('/users', name: 'app_admin_users', methods: ['GET'])]
-    public function users(InertiaService $inertia, EntityManagerInterface $em): Response
+    public function users(Request $request, InertiaService $inertia, EntityManagerInterface $em): Response
     {
-        $users = $em->getRepository(User::class)->findAll();
-        $roles = $em->getRepository(Role::class)->findAll();
+        $page = max(1, $request->query->getInt('page', 1));
+        $limit = min(100, max(1, $request->query->getInt('limit', 10)));
+        $search = trim($request->query->get('search', ''));
+        $sort = $request->query->get('sort', 'id');
+        $dir = strtolower($request->query->get('dir', 'desc')) === 'asc' ? 'asc' : 'desc';
+
+        $qb = $em->getRepository(User::class)->createQueryBuilder('u')
+            ->leftJoin('u.userDetails', 'ud')
+            ->leftJoin('u.role', 'r');
+
+        if ($search !== '') {
+            $qb->andWhere('LOWER(u.email) LIKE :search OR LOWER(ud.firstName) LIKE :search OR LOWER(ud.lastName) LIKE :search OR LOWER(r.name) LIKE :search')
+                ->setParameter('search', '%' . strtolower($search) . '%');
+        }
+
+        $allUsers = $qb->getQuery()->getResult();
+        $totalRows = count($allUsers);
+
+        // Sort
+        $allowedSorts = ['fullName', 'email', 'role', 'isBlocked', 'isVerified', 'id'];
+        $sortField = in_array($sort, $allowedSorts) ? $sort : 'id';
+
+        usort($allUsers, function (User $a, User $b) use ($sortField, $dir) {
+            $nameA = $a->getUserDetails() ? ($a->getUserDetails()->getFirstName() . ' ' . $a->getUserDetails()->getLastName()) : 'User';
+            $nameB = $b->getUserDetails() ? ($b->getUserDetails()->getFirstName() . ' ' . $b->getUserDetails()->getLastName()) : 'User';
+            $valA = match ($sortField) {
+                'fullName' => $nameA,
+                'email' => $a->getEmail(),
+                'role' => $a->getRole()?->getName() ?? '',
+                'isBlocked' => $a->isBlocked() ? 1 : 0,
+                'isVerified' => $a->isVerified() ? 1 : 0,
+                default => $a->getId(),
+            };
+            $valB = match ($sortField) {
+                'fullName' => $nameB,
+                'email' => $b->getEmail(),
+                'role' => $b->getRole()?->getName() ?? '',
+                'isBlocked' => $b->isBlocked() ? 1 : 0,
+                'isVerified' => $b->isVerified() ? 1 : 0,
+                default => $b->getId(),
+            };
+            $cmp = is_string($valA) ? strcasecmp((string)$valA, (string)$valB) : ($valA <=> $valB);
+            return $dir === 'asc' ? $cmp : -$cmp;
+        });
+
+        $offset = ($page - 1) * $limit;
+        $slicedUsers = array_slice($allUsers, $offset, $limit);
 
         $userData = array_map(function (User $u) {
             return [
@@ -39,10 +84,11 @@ class AdminController extends AbstractController
                 'candidateProfileId' => $u->getCandidateProfile()?->getId(),
                 'fullName' => $u->getUserDetails() ? ($u->getUserDetails()->getFirstName() . ' ' . $u->getUserDetails()->getLastName()) : 'User',
                 'location' => $u->getCandidateProfile()?->getLocation() ?? 'N/A',
-                'isSelf' => $this->getUser() === $u,
+                'isSelf' => $this->getUser()?->getId() === $u->getId(),
             ];
-        }, $users);
+        }, $slicedUsers);
 
+        $roles = $em->getRepository(Role::class)->findAll();
         $roleData = array_map(fn(Role $r) => [
             'id' => $r->getId(),
             'name' => $r->getName(),
@@ -52,13 +98,19 @@ class AdminController extends AbstractController
         return $inertia->render('admin/Users', [
             'users' => $userData,
             'roles' => $roleData,
+            'totalRows' => $totalRows,
+            'currentPage' => $page,
+            'pageSize' => $limit,
+            'search' => $search,
+            'sort' => $sortField,
+            'sortDir' => $dir,
         ]);
     }
 
     #[Route('/users/{id}/toggle-block', name: 'app_admin_user_toggle_block', methods: ['POST'])]
     public function toggleBlock(User $user, EntityManagerInterface $em): Response
     {
-        if ($this->getUser() === $user) {
+        if ($this->getUser()?->getId() === $user->getId()) {
             $this->addFlash('error', 'You cannot block your own account.');
             return $this->redirectToRoute('app_admin_users');
         }
@@ -109,7 +161,7 @@ class AdminController extends AbstractController
     #[Route('/users/{id}', name: 'app_admin_user_delete', methods: ['DELETE'])]
     public function deleteUser(User $user, EntityManagerInterface $em): Response
     {
-        if ($this->getUser() === $user) {
+        if ($this->getUser()?->getId() === $user->getId()) {
             $this->addFlash('error', 'You cannot delete your own account while logged in.');
             return $this->redirectToRoute('app_admin_users');
         }
