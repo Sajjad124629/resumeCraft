@@ -27,7 +27,6 @@ const props = defineProps<{
     search?: string;
     sort?: string;
     sortDir?: string;
-    availableAttributes: any[];
     auth?: any;
 }>();
 

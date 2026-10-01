@@ -15,4 +15,18 @@ class AttributeRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Attribute::class);
     }
+
+    /**
+     * Fetch all attributes formatted as array for selection dropdowns.
+     *
+     * @return array<int, array{id: int, name: string, type: string}>
+     */
+    public function findAllForSelect(): array
+    {
+        return $this->createQueryBuilder('a')
+            ->select('a.id', 'a.name', 'a.type')
+            ->orderBy('a.name', 'ASC')
+            ->getQuery()
+            ->getArrayResult();
+    }
 }

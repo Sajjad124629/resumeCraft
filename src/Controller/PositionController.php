@@ -6,6 +6,8 @@ use App\Entity\Position;
 use App\Entity\PositionAccessRule;
 use App\Entity\Attribute;
 use App\Entity\CandidateAttributeValue;
+use App\Entity\Cv;
+use App\Repository\AttributeRepository;
 use App\Service\InertiaService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -13,6 +15,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use App\Entity\User;
+use Doctrine\ORM\OptimisticLockException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
@@ -34,8 +37,6 @@ class PositionController extends AbstractController
         /** @var User|null $user */
         $user = $this->getUser();
         $isCandidate = $user && in_array('ROLE_CANDIDATE', $user->getRoles());
-        $isRecruiter = $user && in_array('ROLE_RECRUITER', $user->getRoles());
-        $isAdmin = $user && in_array('ROLE_ADMIN', $user->getRoles());
 
         $candidateAttrMap = [];
         if ($isCandidate && $user->getCandidateProfile()) {
@@ -119,23 +120,11 @@ class PositionController extends AbstractController
         $positionArray = array_map(fn(Position $p) => [
             'id' => $p->getId(),
             'title' => $p->getTitle(),
-            'shortDescription' => $p->getShortDescription(),
-            'isPublic' => $p->isPublic(),
-            'level' => $p->getLevel(),
             'company' => $p->getCompany(),
+            'level' => $p->getLevel(),
             'cvCount' => $p->getCvs()->count(),
-            'version' => $p->getVersion(),
-            'projectTags' => $p->getProjectTags() ?? [],
-            'attributes' => array_map(fn($a) => $a->getId(), $p->getAttributes()->toArray()),
-            'accessRules' => array_map(fn($r) => [
-                'attributeId' => $r->getAttribute()->getId(),
-                'operator' => $r->getOperator(),
-                'value' => $r->getValue(),
-            ], $p->getAccessRules()->toArray()),
+            'isPublic' => $p->isPublic(),
         ], $slicedPositions);
-
-        $attributes = $em->getRepository(Attribute::class)->findAll();
-        $attributeArray = array_map(fn($a) => ['id' => $a->getId(), 'name' => $a->getName(), 'type' => $a->getType()], $attributes);
 
         return $inertia->render('positions/Index', [
             'positions' => $positionArray,
@@ -145,19 +134,15 @@ class PositionController extends AbstractController
             'search' => $search,
             'sort' => $sort,
             'sortDir' => $dir,
-            'availableAttributes' => $attributeArray,
         ]);
     }
 
     #[Route('/create', name: 'app_position_create_view', methods: ['GET'])]
     #[IsGranted('ROLE_RECRUITER')]
-    public function createView(EntityManagerInterface $em, InertiaService $inertia): Response
+    public function createView(AttributeRepository $attributeRepo, InertiaService $inertia): Response
     {
-        $attributes = $em->getRepository(Attribute::class)->findAll();
-        $attributeArray = array_map(fn($a) => ['id' => $a->getId(), 'name' => $a->getName(), 'type' => $a->getType()], $attributes);
-
         return $inertia->render('positions/Create', [
-            'availableAttributes' => $attributeArray,
+            'availableAttributes' => $attributeRepo->findAllForSelect(),
         ]);
     }
 
@@ -298,11 +283,8 @@ class PositionController extends AbstractController
 
     #[Route('/{id}/edit', name: 'app_position_edit_view', methods: ['GET'])]
     #[IsGranted('ROLE_RECRUITER')]
-    public function editView(Position $position, EntityManagerInterface $em, InertiaService $inertia): Response
+    public function editView(Position $position, AttributeRepository $attributeRepo, InertiaService $inertia): Response
     {
-        $attributes = $em->getRepository(Attribute::class)->findAll();
-        $attributeArray = array_map(fn($a) => ['id' => $a->getId(), 'name' => $a->getName(), 'type' => $a->getType()], $attributes);
-
         return $inertia->render('positions/Edit', [
             'position' => [
                 'id' => $position->getId(),
@@ -321,7 +303,7 @@ class PositionController extends AbstractController
                     'value' => $r->getValue(),
                 ], $position->getAccessRules()->toArray()),
             ],
-            'availableAttributes' => $attributeArray,
+            'availableAttributes' => $attributeRepo->findAllForSelect(),
         ]);
     }
 
@@ -379,7 +361,7 @@ class PositionController extends AbstractController
 
         try {
             $em->flush();
-        } catch (\Doctrine\ORM\OptimisticLockException $e) {
+        } catch (OptimisticLockException $e) {
             return $this->json(['error' => 'Conflict: Document has been modified by someone else.'], 409);
         }
 
@@ -404,7 +386,7 @@ class PositionController extends AbstractController
         $user = $this->getUser();
         $isAdmin = $user && in_array('ROLE_ADMIN', $user->getRoles());
         $allCvs = $position->getCvs()->toArray();
-        $cvs = array_filter($allCvs, function (\App\Entity\Cv $c) use ($isAdmin) {
+        $cvs = array_filter($allCvs, function (Cv $c) use ($isAdmin) {
             if ($isAdmin) return true;
             return $c->getStatus() === 'published';
         });

@@ -7,6 +7,7 @@ use App\Entity\CandidateAttributeValue;
 use App\Entity\CandidateProfile;
 use App\Entity\Project;
 use App\Entity\User;
+use App\Entity\UserDetails;
 use App\Service\AchievementService;
 use App\Service\InertiaService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -89,7 +90,7 @@ class ProfileController extends AbstractController
             $em->refresh($freshUser);
         } catch (\Exception $e) {
         }
-        $details = $freshUser->getUserDetails() ?? $em->getRepository(\App\Entity\UserDetails::class)->findOneBy(['user' => $freshUser]);
+        $details = $freshUser->getUserDetails() ?? $em->getRepository(UserDetails::class)->findOneBy(['user' => $freshUser]);
         if ($details) {
             try {
                 $em->refresh($details);
@@ -131,9 +132,9 @@ class ProfileController extends AbstractController
         $freshUser = $em->find(User::class, $user->getId()) ?? $user;
         $data = $request->getPayload()->all() ?: (json_decode($request->getContent(), true) ?? $request->request->all());
 
-        $details = $freshUser->getUserDetails() ?? $em->getRepository(\App\Entity\UserDetails::class)->findOneBy(['user' => $freshUser]);
+        $details = $freshUser->getUserDetails() ?? $em->getRepository(UserDetails::class)->findOneBy(['user' => $freshUser]);
         if (!$details) {
-            $details = new \App\Entity\UserDetails();
+            $details = new UserDetails();
             $details->setUser($freshUser);
             $freshUser->setUserDetails($details);
             $em->persist($details);
@@ -183,10 +184,14 @@ class ProfileController extends AbstractController
         /** @var User|null $user */
         $user = $this->getUser();
         if (!$user) {
+            if ($request->headers->get('X-Inertia')) {
+                $this->addFlash('error', 'Unauthorized');
+                return $this->redirect($request->headers->get('referer') ?: $this->generateUrl('app_profile_settings'));
+            }
             return $this->json(['error' => 'Unauthorized'], 401);
         }
 
-        $data = json_decode($request->getContent(), true) ?? $request->request->all();
+        $data = $request->getPayload()->all() ?: (json_decode($request->getContent(), true) ?? $request->request->all());
 
         $currentPassword = $data['currentPassword'] ?? '';
         $newPassword = $data['newPassword'] ?? '';
@@ -195,24 +200,45 @@ class ProfileController extends AbstractController
         // If user already has a password, verify current password
         if (!empty($user->getPassword())) {
             if (!$currentPassword) {
+                if ($request->headers->get('X-Inertia')) {
+                    $this->addFlash('error', 'Current password is required.');
+                    return $this->redirect($request->headers->get('referer') ?: $this->generateUrl('app_profile_settings'));
+                }
                 return $this->json(['error' => 'Current password is required.'], 422);
             }
             if (!$passwordHasher->isPasswordValid($user, $currentPassword)) {
+                if ($request->headers->get('X-Inertia')) {
+                    $this->addFlash('error', 'The current password you entered is incorrect.');
+                    return $this->redirect($request->headers->get('referer') ?: $this->generateUrl('app_profile_settings'));
+                }
                 return $this->json(['error' => 'The current password you entered is incorrect.'], 422);
             }
         }
 
         if (!$newPassword || strlen($newPassword) < 6) {
+            if ($request->headers->get('X-Inertia')) {
+                $this->addFlash('error', 'New password must be at least 6 characters long.');
+                return $this->redirect($request->headers->get('referer') ?: $this->generateUrl('app_profile_settings'));
+            }
             return $this->json(['error' => 'New password must be at least 6 characters long.'], 422);
         }
 
         if ($newPassword !== $confirmPassword) {
+            if ($request->headers->get('X-Inertia')) {
+                $this->addFlash('error', 'New password and confirmation password do not match.');
+                return $this->redirect($request->headers->get('referer') ?: $this->generateUrl('app_profile_settings'));
+            }
             return $this->json(['error' => 'New password and confirmation password do not match.'], 422);
         }
 
         $hashedPassword = $passwordHasher->hashPassword($user, $newPassword);
         $user->setPassword($hashedPassword);
         $em->flush();
+
+        if ($request->headers->get('X-Inertia')) {
+            $this->addFlash('success', 'Your password has been changed successfully!');
+            return $this->redirect($request->headers->get('referer') ?: $this->generateUrl('app_profile_settings'));
+        }
 
         return $this->json([
             'success' => true,

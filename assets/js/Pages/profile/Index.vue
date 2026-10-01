@@ -139,45 +139,20 @@ watch(() => meForm.photo, () => {
 
 // --- Password Change Modal ---
 const showPasswordModal = ref(false);
-const passwordForm = ref({
+const passwordForm = useForm({
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
 });
-const passwordLoading = ref(false);
-const passwordError = ref('');
 
-async function submitPasswordChange() {
-    passwordError.value = '';
-    if (!passwordForm.value.newPassword || passwordForm.value.newPassword.length < 6) {
-        passwordError.value = 'New password must be at least 6 characters.';
-        return;
-    }
-    if (passwordForm.value.newPassword !== passwordForm.value.confirmPassword) {
-        passwordError.value = 'New password and confirmation do not match.';
-        return;
-    }
-
-    passwordLoading.value = true;
-    try {
-        const res = await fetch(route('app_profile_change_password'), {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(passwordForm.value),
-        });
-        const data = await res.json();
-        if (res.ok && data.success) {
+function submitPasswordChange() {
+    passwordForm.post(route('app_profile_change_password'), {
+        preserveScroll: true,
+        onSuccess: () => {
             showPasswordModal.value = false;
-            passwordForm.value = { currentPassword: '', newPassword: '', confirmPassword: '' };
-            showToast('Password changed successfully!');
-        } else {
-            passwordError.value = data.error || 'Failed to update password.';
-        }
-    } catch (e) {
-        passwordError.value = 'Network error occurred while updating password.';
-    } finally {
-        passwordLoading.value = false;
-    }
+            passwordForm.reset();
+        },
+    });
 }
 
 
@@ -1172,37 +1147,35 @@ async function deleteSelectedCvs() {
                         class="text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
                 </div>
 
-                <div v-if="passwordError"
-                    class="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 text-xs font-medium">
-                    {{ passwordError }}
-                </div>
-
                 <form @submit.prevent="submitPasswordChange" class="space-y-3">
                     <div>
                         <Label :isRequired="true" for="currentPwd">{{ __('Current Password') }}</Label>
                         <Input id="currentPwd" type="password" v-model="passwordForm.currentPassword"
                             class="form-input mt-1 block w-full rounded-xl" required
                             :placeholder="__('Enter current password')" />
+                        <InputError :message="passwordForm.errors.currentPassword" class="mt-1" />
                     </div>
                     <div>
                         <Label :isRequired="true" for="newPwd">{{ __('New Password') }}</Label>
                         <Input id="newPwd" type="password" v-model="passwordForm.newPassword"
                             class="form-input mt-1 block w-full rounded-xl" required
                             :placeholder="__('Min. 6 characters')" />
+                        <InputError :message="passwordForm.errors.newPassword" class="mt-1" />
                     </div>
                     <div>
                         <Label :isRequired="true" for="confirmPwd">{{ __('Confirm Password') }}</Label>
                         <Input id="confirmPwd" type="password" v-model="passwordForm.confirmPassword"
                             class="form-input mt-1 block w-full rounded-xl" required
                             :placeholder="__('Re-type new password')" />
+                        <InputError :message="passwordForm.errors.confirmPassword" class="mt-1" />
                     </div>
 
                     <div class="flex justify-end gap-2 pt-3 border-t border-gray-100 dark:border-gray-800">
                         <Button type="button" variant="outline" @click="showPasswordModal = false">
                             {{ __('Cancel') }}
                         </Button>
-                        <Button type="submit" variant="destructive" :disabled="passwordLoading">
-                            {{ passwordLoading ? __('Updating...') : __('Update Password') }}
+                        <Button type="submit" variant="destructive" :disabled="passwordForm.processing">
+                            {{ passwordForm.processing ? __('Updating...') : __('Update Password') }}
                         </Button>
                     </div>
                 </form>
