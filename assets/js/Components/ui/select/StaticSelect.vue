@@ -20,8 +20,8 @@ const props = defineProps<{
     // required?: boolean
     // disabled?: boolean
     // readonly?: boolean
-    defaultValue?: string | number | null
-    modelValue?: string | number | null
+    defaultValue?: string | number | boolean | null
+    modelValue?: string | number | boolean | null
     class?: string
 }>()
 vSelect.props.components.default = () => ({
@@ -37,7 +37,7 @@ vSelect.props.components.default = () => ({
     },
 });
 const emit = defineEmits<{
-    (e: 'update:modelValue', payload: string | number | null): void
+    (e: 'update:modelValue', payload: string | number | boolean | null): void
 }>()
 const modelValue = useVModel(props, 'modelValue', emit, {
     passive: true,
