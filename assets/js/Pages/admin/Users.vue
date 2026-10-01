@@ -7,6 +7,7 @@ import { Button } from '@/Components/ui/button';
 import TextLink from '@/Components/TextLink.vue';
 import { HugeiconsIcon } from '@hugeicons/vue';
 import { route } from '@/route';
+import { __ } from '@/Composables/trans';
 import { 
     Delete01Icon, 
     SecurityBlockIcon, 
@@ -314,6 +315,7 @@ function deleteSelected() {
                     :showNumbers="true" 
                     :showFirstPage="true" 
                     :showLastPage="true" 
+                    :sortable="true"
                     :sortColumn="sortColumn"
                     :sortDirection="sortDirection" 
                     skin="bh-table-hover"

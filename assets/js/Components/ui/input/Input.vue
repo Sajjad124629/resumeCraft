@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useVModel } from '@vueuse/core';
 
-import { cn } from '@/lib/utils';
+import { cn } from '@/Lib/utils';
 
 const props = defineProps<{
     autocomplete?: string
@@ -10,19 +10,19 @@ const props = defineProps<{
     disabled?: boolean
     readonly?: boolean
     type: string
-    defaultValue?: string | number
-    modelValue?: string | number
+    defaultValue?: string | number | null
+    modelValue?: string | number | null
     class?: string
 }>()
 const emit = defineEmits<{
-    (e: 'update:modelValue', payload: string | number): void
+    (e: 'update:modelValue', payload: string | number | null): void
 }>()
-const modelValue = useVModel(props,'modelValue',emit,{
+const modelValue = useVModel(props, 'modelValue', emit, {
     passive: true,
     defaultValue: props.defaultValue,
 })
 </script>
 <template>
-    <input v-model="modelValue" :type="type" :placeholder="placeholder" :required="required" :disabled="disabled" :readonly="readonly" :autocomplete="autocomplete"
-         :class="cn('form-input', props.class)"/>
+    <input v-model="modelValue" :type="type" :placeholder="placeholder" :required="required" :disabled="disabled"
+        :readonly="readonly" :autocomplete="autocomplete" :class="cn('form-input', props.class)" />
 </template>

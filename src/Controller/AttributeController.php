@@ -22,8 +22,8 @@ class AttributeController extends AbstractController
         $page = max(1, $request->query->getInt('page', 1));
         $limit = min(100, max(1, $request->query->getInt('limit', 10)));
         $search = trim($request->query->get('search', ''));
-        $sort = $request->query->get('sort', 'name');
-        $dir = strtolower($request->query->get('dir', 'asc')) === 'desc' ? 'desc' : 'asc';
+        $sort = $request->query->get('sort', 'id');
+        $dir = strtolower($request->query->get('dir', 'desc')) === 'asc' ? 'asc' : 'desc';
 
         $qb = $em->getRepository(Attribute::class)->createQueryBuilder('a')
             ->leftJoin('a.category', 'c');
@@ -36,8 +36,8 @@ class AttributeController extends AbstractController
         $countQb = clone $qb;
         $totalRows = (int) $countQb->select('count(a.id)')->getQuery()->getSingleScalarResult();
 
-        $allowedSorts = ['name', 'type', 'description', 'id'];
-        $sortCol = in_array($sort, $allowedSorts) ? 'a.' . $sort : 'a.name';
+        $allowedSorts = ['id', 'name', 'type', 'description'];
+        $sortCol = in_array($sort, $allowedSorts) ? 'a.' . $sort : 'a.id';
         if ($sort === 'category') {
             $sortCol = 'c.name';
         }
@@ -48,7 +48,6 @@ class AttributeController extends AbstractController
             ->setMaxResults($limit);
 
         $attributes = $qb->getQuery()->getResult();
-        $categories = $em->getRepository(AttributeCategory::class)->findAll();
 
         $attributeArray = array_map(function (Attribute $attr) {
             return [
@@ -64,13 +63,6 @@ class AttributeController extends AbstractController
             ];
         }, $attributes);
 
-        $categoryArray = array_map(function (AttributeCategory $cat) {
-            return [
-                'id' => $cat->getId(),
-                'name' => $cat->getName(),
-            ];
-        }, $categories);
-
         return $inertia->render('attributes/Index', [
             'attributes' => $attributeArray,
             'totalRows' => $totalRows,
@@ -79,18 +71,15 @@ class AttributeController extends AbstractController
             'search' => $search,
             'sort' => $sort,
             'sortDir' => $dir,
-            'categories' => $categoryArray,
         ]);
     }
 
     #[Route('/create', name: 'app_attribute_create_view', methods: ['GET'])]
     public function createView(EntityManagerInterface $em, InertiaService $inertia): Response
     {
-        $categories = $em->getRepository(AttributeCategory::class)->findAll();
-        $categoryArray = array_map(fn($cat) => ['id' => $cat->getId(), 'name' => $cat->getName()], $categories);
 
         return $inertia->render('attributes/Create', [
-            'categories' => $categoryArray,
+            'categories' => $em->getRepository(AttributeCategory::class)->findAllAsArray(),
         ]);
     }
 
@@ -139,8 +128,7 @@ class AttributeController extends AbstractController
     #[Route('/{id}/edit', name: 'app_attribute_edit_view', methods: ['GET'])]
     public function editView(Attribute $attribute, EntityManagerInterface $em, InertiaService $inertia): Response
     {
-        $categories = $em->getRepository(AttributeCategory::class)->findAll();
-        $categoryArray = array_map(fn($cat) => ['id' => $cat->getId(), 'name' => $cat->getName()], $categories);
+
 
         return $inertia->render('attributes/Edit', [
             'attribute' => [
@@ -151,11 +139,10 @@ class AttributeController extends AbstractController
                 'options' => $attribute->getOptions() ?? [],
                 'category_id' => $attribute->getCategory()?->getId(),
             ],
-            'categories' => $categoryArray,
+            'categories' => $em->getRepository(AttributeCategory::class)->findAllAsArray(),
         ]);
     }
 
-    #[Route('/{id}/edit', name: 'app_attribute_edit', methods: ['POST', 'PUT'])]
     #[Route('/{id}', name: 'app_attribute_update', methods: ['POST', 'PUT'])]
     public function edit(Attribute $attribute, Request $request, EntityManagerInterface $em): Response
     {

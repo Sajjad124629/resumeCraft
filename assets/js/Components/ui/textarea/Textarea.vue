@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useVModel } from '@vueuse/core';
-import { cn } from '@/lib/utils';
+import { cn } from '@/Lib/utils';
 
 const props = withDefaults(defineProps<{
     id?: string
@@ -9,8 +9,8 @@ const props = withDefaults(defineProps<{
     required?: boolean
     disabled?: boolean
     readonly?: boolean
-    defaultValue?: string | number
-    modelValue?: string | number
+    defaultValue?: string | number | null
+    modelValue?: string | number | null
     rows?: number | string
     cols?: number | string
     class?: string
@@ -18,7 +18,7 @@ const props = withDefaults(defineProps<{
     rows: 3,
 })
 const emit = defineEmits<{
-    (e: 'update:modelValue', payload: string | number): void
+    (e: 'update:modelValue', payload: string | number | null): void
 }>()
 const modelValue = useVModel(props, 'modelValue', emit, {
     passive: true,

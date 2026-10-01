@@ -35,6 +35,6 @@ class ProjectRepository extends ServiceEntityRepository
         }
         $tagCounts = array_count_values($tags);
         arsort($tagCounts);
-        return array_slice(array_keys($tagCounts), 0, $limit);
+        return array_slice($tagCounts, 0, $limit);
     }
 }

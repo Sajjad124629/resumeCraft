@@ -95,7 +95,8 @@ const props = defineProps<{
                             <tr v-for="pos in latestPositions" :key="pos.id"
                                 class="border-b hover:bg-gray-50 dark:hover:bg-gray-800/50">
                                 <td class="p-2">
-                                    <Link :href="route('app_position_show', { id: pos.id })" class="text-blue-600 hover:underline">
+                                    <Link :href="route('app_position_show', { id: pos.id })"
+                                        class="text-blue-600 hover:underline">
                                         {{ pos.title }}
                                     </Link>
                                 </td>
@@ -126,7 +127,8 @@ const props = defineProps<{
                             <tr v-for="pos in popularPositions" :key="pos.id"
                                 class="border-b hover:bg-gray-50 dark:hover:bg-gray-800/50">
                                 <td class="p-2">
-                                    <Link :href="route('app_position_show', { id: pos.id })" class="text-blue-600 hover:underline">
+                                    <Link :href="route('app_position_show', { id: pos.id })"
+                                        class="text-blue-600 hover:underline">
                                         {{ pos.title }}
                                     </Link>
                                 </td>
@@ -148,10 +150,9 @@ const props = defineProps<{
                 </div>
             </div>
             <div class="flex flex-wrap gap-3 justify-center py-4">
-                <Link v-for="tag in tags" :key="tag.name" :href="route('app_search', { q: tag.name })"
-                    class="bg-blue-100 hover:bg-blue-200 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 dark:hover:bg-blue-900/70 px-3 py-1 rounded-full text-center transition cursor-pointer"
-                    :style="{ fontSize: `${Math.min(0.8 + (tag.weight * 0.1), 2.5)}rem`, opacity: Math.min(0.5 + (tag.weight * 0.1), 1) }">
-                    #{{ tag.name }} ({{ tag.weight }})
+                <Link v-for="(value, key) in tags" :key="key" :href="route('app_search', { q: key })"
+                    class="px-4 py-2 rounded-xl text-sm font-semibold border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 transition hover:bg-blue-100 dark:hover:bg-blue-900/60 shadow-sm">
+                    #{{ key }} ({{ value }})
                 </Link>
                 <div v-if="tags.length === 0" class="text-gray-500 w-full text-center">{{ __('No tags available yet. Add projects to your profile!') }}</div>
             </div>

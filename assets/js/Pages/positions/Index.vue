@@ -4,6 +4,7 @@ import { Head, router, Link } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import Vue3Datatable from '@bhplugin/vue3-datatable';
 import { route } from '@/route';
+import { __ } from '@/Composables/trans';
 
 import { Button } from '@/Components/ui/button';
 import TextLink from '@/Components/TextLink.vue';
@@ -229,7 +230,7 @@ const isRecruiter = () => {
                     :totalRows="props.totalRows ?? (props.positions || []).length" :rows="positions || []"
                     :columns="cols" :hasCheckbox="isRecruiter()" :search="searchQuery" :page="currentPage"
                     :pageSize="pageSize" :pageSizeOptions="[5, 10, 20, 50]" :showPageSize="true" :pagination="true"
-                    :showNumbers="true" :showFirstPage="true" :showLastPage="true" :sortColumn="sortColumn"
+                    :showNumbers="true" :showFirstPage="true" :showLastPage="true" :sortable="true" :sortColumn="sortColumn"
                     :sortDirection="sortDirection" skin="bh-table-hover"
                     :paginationInfo="__('Showing') + ' {0} ' + __('to') + ' {1} ' + __('of') + ' {2} ' + __('entries')"
                     :noDataContent="__('No positions found.')" @change="onServerChange" @rowSelect="onRowSelect"

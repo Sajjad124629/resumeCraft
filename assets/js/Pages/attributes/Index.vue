@@ -7,10 +7,11 @@ import { Button } from '@/Components/ui/button';
 import TextLink from '@/Components/TextLink.vue';
 import { HugeiconsIcon } from '@hugeicons/vue';
 import { route } from '@/route';
-import { 
-    PlusSignIcon, 
-    PencilEdit02Icon, 
-    Delete01Icon, 
+import { __ } from '@/Composables/trans';
+import {
+    PlusSignIcon,
+    PencilEdit02Icon,
+    Delete01Icon,
     Search01Icon
 } from '@hugeicons/core-free-icons';
 
@@ -18,7 +19,6 @@ defineOptions({ layout: AppLayout });
 
 const props = defineProps<{
     attributes: any[];
-    categories: any[];
     totalRows?: number;
     currentPage?: number;
     pageSize?: number;
@@ -33,8 +33,8 @@ const loading = ref(false);
 const currentPage = ref(props.currentPage || 1);
 const pageSize = ref(props.pageSize || 10);
 const searchQuery = ref(props.search || '');
-const sortColumn = ref(props.sort || 'name');
-const sortDirection = ref(props.sortDir || 'asc');
+const sortColumn = ref(props.sort || 'id');
+const sortDirection = ref(props.sortDir || 'desc');
 
 let searchTimer: any = null;
 
@@ -59,8 +59,8 @@ const fetchServerData = (page: number, limit: number, search: string, sort: stri
 const onServerChange = (data: any) => {
     currentPage.value = data.current_page || 1;
     pageSize.value = data.pagesize || 10;
-    sortColumn.value = data.sort_column || 'name';
-    sortDirection.value = data.sort_direction || 'asc';
+    sortColumn.value = data.sort_column || 'id';
+    sortDirection.value = data.sort_direction || 'desc';
 
     if (data.change_type === 'search') {
         clearTimeout(searchTimer);
@@ -96,8 +96,16 @@ function getSelectedAttributeId(): number | null {
     return row?.id ?? (typeof row === 'number' ? row : null);
 }
 
-function editAttribute() {
-    const id = getSelectedAttributeId();
+function editAttribute(target?: any) {
+    let id: number | null = null;
+    if (target && (typeof target.id === 'number' || typeof target.id === 'string')) {
+        id = Number(target.id);
+    } else if (typeof target === 'number') {
+        id = target;
+    } else {
+        id = getSelectedAttributeId();
+    }
+
     if (id) {
         router.visit(route('app_attribute_edit_view', { id }));
     }
@@ -117,24 +125,20 @@ function deleteAttributes() {
         datatableRef.value?.clearSelectedRows();
     }
 }
-
-function onRowDBClick(row: any) {
-    const id = row?.id ?? (typeof row === 'number' ? row : null);
-    if (id) {
-        router.visit(route('app_attribute_edit_view', { id }));
-    }
-}
 </script>
 
 <template>
+
     <Head :title="__('Attribute Library')" />
 
     <div class="pt-5 space-y-6">
         <!-- Header & Action Toolbar -->
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-                <h3 class="text-2xl font-black tracking-tight text-gray-900 dark:text-white-light flex items-center gap-2.5">
-                    <span class="inline-block w-2.5 h-7 rounded-full bg-gradient-to-b from-purple-500 to-indigo-600 shadow-[0_0_12px_rgba(168,85,247,0.5)]"></span>
+                <h3
+                    class="text-2xl font-black tracking-tight text-gray-900 dark:text-white-light flex items-center gap-2.5">
+                    <span
+                        class="inline-block w-2.5 h-7 rounded-full bg-gradient-to-b from-purple-500 to-indigo-600 shadow-[0_0_12px_rgba(168,85,247,0.5)]"></span>
                     {{ __('Attribute Library') }}
                 </h3>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 pl-5">
@@ -144,20 +148,26 @@ function onRowDBClick(row: any) {
 
             <div class="flex flex-wrap items-center gap-2.5">
                 <!-- Selection Toolbar -->
-                <div v-if="selectedRows.length > 0" class="flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-xl shadow-xs transition-all animate-fadeIn">
-                    <span class="text-xs text-blue-800 dark:text-blue-300 font-bold mr-1">{{ selectedRows.length }} {{ __('selected') }}</span>
-                    <Button v-if="selectedRows.length === 1" size="sm" variant="outline" class="flex gap-1 h-7 text-xs rounded-lg" @click="editAttribute">
+                <div v-if="selectedRows.length > 0"
+                    class="flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-xl shadow-xs transition-all animate-fadeIn">
+                    <span class="text-xs text-blue-800 dark:text-blue-300 font-bold mr-1">{{ selectedRows.length }} {{
+                        __('selected') }}</span>
+                    <Button v-if="selectedRows.length === 1" size="sm" variant="outline"
+                        class="flex gap-1 h-7 text-xs rounded-lg" @click="editAttribute()">
                         <HugeiconsIcon :icon="PencilEdit02Icon" :size="13" color="currentColor" /> {{ __('Edit') }}
                     </Button>
-                    <Button size="sm" variant="destructive" @click="deleteAttributes" class="flex gap-1 h-7 text-xs rounded-lg">
+                    <Button size="sm" variant="destructive" @click="deleteAttributes"
+                        class="flex gap-1 h-7 text-xs rounded-lg">
                         <HugeiconsIcon :icon="Delete01Icon" :size="13" color="currentColor" /> {{ __('Delete') }}
                     </Button>
                 </div>
-                
+
                 <!-- 3D Create Attribute Button -->
                 <TextLink :href="route('app_attribute_create_view')">
-                    <Button size="sm" class="bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-700 !text-white font-bold shadow-[0_4px_14px_rgba(67,97,238,0.35),inset_0_1px_0_rgba(255,255,255,0.3)] hover:-translate-y-0.5 active:scale-95 transition-all duration-200 rounded-xl px-4 py-2 flex items-center gap-1.5">
-                        <HugeiconsIcon :icon="PlusSignIcon" :size="16" color="currentColor" /> {{ __('Create Attribute') }}
+                    <Button size="sm"
+                        class="bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-700 !text-white font-bold shadow-[0_4px_14px_rgba(67,97,238,0.35),inset_0_1px_0_rgba(255,255,255,0.3)] hover:-translate-y-0.5 active:scale-95 transition-all duration-200 rounded-xl px-4 py-2 flex items-center gap-1.5">
+                        <HugeiconsIcon :icon="PlusSignIcon" :size="16" color="currentColor" /> {{ __('Create Attribute')
+                        }}
                     </Button>
                 </TextLink>
             </div>
@@ -172,55 +182,37 @@ function onRowDBClick(row: any) {
                 </div>
 
                 <div class="relative w-full sm:w-64">
-                    <input 
-                        type="text" 
-                        v-model="searchQuery" 
-                        @input="onSearchInput"
+                    <input type="text" v-model="searchQuery" @input="onSearchInput"
                         :placeholder="__('Filter attributes...')"
-                        class="form-input text-xs pl-8 pr-3 py-1.5 rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-800/80 w-full"
-                    />
-                    <HugeiconsIcon :icon="Search01Icon" :size="14" color="currentColor" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                        class="form-input text-xs pl-8 pr-3 py-1.5 rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-800/80 w-full" />
+                    <HugeiconsIcon :icon="Search01Icon" :size="14" color="currentColor"
+                        class="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
                 </div>
             </div>
 
             <!-- Vue3Datatable Component -->
             <div class="datatable">
-                <Vue3Datatable
-                    ref="datatableRef"
-                    :isServerMode="true"
-                    :loading="loading"
-                    :totalRows="props.totalRows ?? (props.attributes || []).length"
-                    :rows="attributes || []"
-                    :columns="cols"
-                    :hasCheckbox="true"
-                    :search="searchQuery"
-                    :page="currentPage"
-                    :pageSize="pageSize"
-                    :pageSizeOptions="[5, 10, 20, 50]"
-                    :showPageSize="true"
-                    :pagination="true"
-                    :showNumbers="true"
-                    :showFirstPage="true"
-                    :showLastPage="true"
-                    :sortColumn="sortColumn"
-                    :sortDirection="sortDirection"
-                    skin="bh-table-hover"
+                <Vue3Datatable ref="datatableRef" :isServerMode="true" :loading="loading"
+                    :totalRows="props.totalRows ?? (props.attributes || []).length" :rows="props.attributes || []"
+                    :columns="cols" :hasCheckbox="true" :search="searchQuery" :page="currentPage" :pageSize="pageSize"
+                    :pageSizeOptions="[5, 10, 20, 50]" :showPageSize="true" :pagination="true" :showNumbers="true"
+                    :showFirstPage="true" :showLastPage="true" :sortable="true" :sortColumn="sortColumn"
+                    :sortDirection="sortDirection" skin="bh-table-hover"
                     :paginationInfo="__('Showing') + ' {0} ' + __('to') + ' {1} ' + __('of') + ' {2} ' + __('entries')"
-                    :noDataContent="__('No attributes found.')"
-                    @change="onServerChange"
-                    @rowSelect="onRowSelect"
-                    @rowDBClick="onRowDBClick"
-                >
+                    :noDataContent="__('No attributes found.')" @change="onServerChange" @rowSelect="onRowSelect"
+                    @rowDBClick="editAttribute">
                     <template #name="data">
                         <span class="font-bold text-gray-900 dark:text-gray-100">{{ data.value.name }}</span>
                     </template>
                     <template #category="data">
-                        <span class="px-2.5 py-0.5 rounded-lg text-xs font-semibold bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+                        <span
+                            class="px-2.5 py-0.5 rounded-lg text-xs font-semibold bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
                             {{ data.value.category?.name || '-' }}
                         </span>
                     </template>
                     <template #type="data">
-                        <span class="px-2.5 py-0.5 bg-blue-50 text-primary dark:bg-blue-900/30 dark:text-blue-300 rounded-lg text-xs font-bold uppercase tracking-wider">
+                        <span
+                            class="px-2.5 py-0.5 bg-blue-50 text-primary dark:bg-blue-900/30 dark:text-blue-300 rounded-lg text-xs font-bold uppercase tracking-wider">
                             {{ __(data.value.type) }}
                         </span>
                     </template>

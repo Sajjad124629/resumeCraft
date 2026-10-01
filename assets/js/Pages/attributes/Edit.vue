@@ -73,7 +73,7 @@ const submit = () => {
             ...data,
             options: finalOptions
         };
-    }).post(route('app_attribute_edit', { id: props.attribute.id }));
+    }).post(route('app_attribute_update', { id: props.attribute.id }));
 };
 </script>
 
@@ -87,7 +87,7 @@ const submit = () => {
                 <div class="ml-5 mb-4">
                     <h5 class="font-semibold text-lg">{{ __('Edit Attribute') }}</h5>
                     <small class="text-gray-500"><em>{{ __('The field labels marked with * are required input fields.')
-                    }}</em></small>
+                            }}</em></small>
                 </div>
             </div>
 
@@ -164,7 +164,7 @@ const submit = () => {
                             <Input type="text" v-model.trim="form.tuning.regex" placeholder="e.g. ^[A-Za-z]+$"
                                 class="form-input mt-1 block w-full" />
                             <small class="text-gray-500">{{ __('Pattern to validate against (HTML5 pattern format)')
-                            }}</small>
+                                }}</small>
                         </div>
                     </div>
                 </div>

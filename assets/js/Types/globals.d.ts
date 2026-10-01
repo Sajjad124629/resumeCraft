@@ -28,4 +28,8 @@ declare module 'vue' {
     }
 }
 
+declare global {
+    function __(key: string, replace?: Record<string, any>): string;
+}
+
 

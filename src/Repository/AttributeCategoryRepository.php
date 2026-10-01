@@ -15,4 +15,11 @@ class AttributeCategoryRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, AttributeCategory::class);
     }
+    public function findAllAsArray(): array
+    {
+        return $this->createQueryBuilder('c')
+            ->select('c.id', 'c.name')
+            ->getQuery()
+            ->getArrayResult();
+    }
 }
