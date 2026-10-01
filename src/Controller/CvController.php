@@ -193,6 +193,7 @@ class CvController extends AbstractController
     }
 
     #[Route('/batch-delete', name: 'app_cv_batch_delete', methods: ['POST', 'DELETE'])]
+    #[IsGranted('ROLE_CANDIDATE')]
     public function batchDelete(Request $request, EntityManagerInterface $em): Response
     {
         /** @var User|null $user */
@@ -226,6 +227,7 @@ class CvController extends AbstractController
     }
 
     #[Route('/{id}', name: 'app_cv_delete', methods: ['DELETE', 'POST'], requirements: ['id' => '\d+'])]
+    #[IsGranted('ROLE_CANDIDATE')]
     public function delete(Cv $cv, EntityManagerInterface $em): Response
     {
         /** @var User|null $user */
@@ -249,6 +251,7 @@ class CvController extends AbstractController
     }
 
     #[Route('/{id}/publish', name: 'app_cv_publish', methods: ['POST'])]
+    #[IsGranted('ROLE_CANDIDATE')]
     public function publish(Cv $cv, EntityManagerInterface $em): Response
     {
         /** @var User|null $user */
@@ -292,6 +295,7 @@ class CvController extends AbstractController
     }
 
     #[Route('/{id}/unpublish', name: 'app_cv_unpublish', methods: ['POST'])]
+    #[IsGranted('ROLE_CANDIDATE')]
     public function unpublish(Cv $cv, EntityManagerInterface $em): Response
     {
         /** @var User|null $user */

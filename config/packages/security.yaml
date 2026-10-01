@@ -40,14 +40,8 @@ security:
                 target: app_home
 
     access_control:
-        - { path: ^/profile/public, roles: PUBLIC_ACCESS }
         - { path: ^/admin, roles: ROLE_ADMIN }
-        - { path: ^/dashboard, roles: ROLE_USER }
-        - { path: ^/profile/settings, roles: ROLE_USER }
-        - { path: ^/profile/change-password, roles: ROLE_USER }
-        - { path: ^/profile, roles: ROLE_CANDIDATE }
-        - { path: ^/positions/manage, roles: ROLE_RECRUITER }
-        - { path: ^/attributes, roles: ROLE_RECRUITER }
+
 
 when@test:
     security:

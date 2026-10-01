@@ -50,6 +50,7 @@ class ProfileController extends AbstractController
     }
 
     #[Route('', name: 'app_profile_index', methods: ['GET'])]
+    #[IsGranted('ROLE_USER')]
     public function index(InertiaService $inertia, EntityManagerInterface $em, AchievementService $achievementService): Response
     {
         /** @var User|null $user */
@@ -67,6 +68,7 @@ class ProfileController extends AbstractController
     }
 
     #[Route('/settings', name: 'app_profile_settings', methods: ['GET'])]
+    #[IsGranted('ROLE_USER')]
     public function settings(InertiaService $inertia, EntityManagerInterface $em): Response
     {
         /** @var User|null $user */
@@ -116,6 +118,7 @@ class ProfileController extends AbstractController
     }
 
     #[Route('/settings/update', name: 'app_profile_settings_update', methods: ['POST', 'PUT'])]
+    #[IsGranted('ROLE_USER')]
     public function updateSettings(Request $request, EntityManagerInterface $em): Response
     {
         /** @var User|null $user */
@@ -171,6 +174,7 @@ class ProfileController extends AbstractController
     }
 
     #[Route('/change-password', name: 'app_profile_change_password', methods: ['POST'])]
+    #[IsGranted('ROLE_USER')]
     public function changePassword(
         Request $request,
         EntityManagerInterface $em,
@@ -370,6 +374,7 @@ class ProfileController extends AbstractController
     }
 
     #[Route('/attributes/update', name: 'app_profile_update_attr', methods: ['POST', 'PUT'])]
+    #[IsGranted('ROLE_CANDIDATE')]
     public function updateAttribute(Request $request, EntityManagerInterface $em): Response
     {
         $data = json_decode($request->getContent(), true) ?? $request->request->all();
@@ -420,6 +425,7 @@ class ProfileController extends AbstractController
     }
 
     #[Route('/attributes/batch-delete', name: 'app_profile_batch_delete_attr', methods: ['POST', 'DELETE'])]
+    #[IsGranted('ROLE_CANDIDATE')]
     public function batchDeleteAttributes(Request $request, EntityManagerInterface $em): Response
     {
         $data = $request->getPayload()->all() ?: (json_decode($request->getContent(), true) ?? $request->request->all());
@@ -457,6 +463,7 @@ class ProfileController extends AbstractController
     }
 
     #[Route('/attributes/{attributeId}', name: 'app_profile_delete_attr', methods: ['DELETE', 'POST'], requirements: ['attributeId' => '\d+'])]
+    #[IsGranted('ROLE_CANDIDATE')]
     public function deleteAttribute(int $attributeId, Request $request, EntityManagerInterface $em): Response
     {
         $candidateId = $request->query->get('candidateId') ? (int)$request->query->get('candidateId') : null;
@@ -487,6 +494,7 @@ class ProfileController extends AbstractController
     }
 
     #[Route('/update-me', name: 'app_profile_update_me', methods: ['POST', 'PUT'])]
+    #[IsGranted('ROLE_CANDIDATE')]
     public function updateMe(Request $request, EntityManagerInterface $em): Response
     {
         $data = json_decode($request->getContent(), true) ?? $request->request->all();
@@ -533,6 +541,7 @@ class ProfileController extends AbstractController
     }
 
     #[Route('/projects/create', name: 'app_profile_project_create_view', methods: ['GET'])]
+    #[IsGranted('ROLE_CANDIDATE')]
     public function createProjectView(Request $request, InertiaService $inertia, EntityManagerInterface $em): Response
     {
         $candidateId = $request->query->get('candidateId') ? (int)$request->query->get('candidateId') : null;
@@ -554,6 +563,7 @@ class ProfileController extends AbstractController
     }
 
     #[Route('/projects', name: 'app_profile_project_create', methods: ['POST'])]
+    #[IsGranted('ROLE_CANDIDATE')]
     public function createProject(Request $request, EntityManagerInterface $em): Response
     {
         $data = $request->getPayload()->all() ?: (json_decode($request->getContent(), true) ?? $request->request->all());
@@ -585,6 +595,7 @@ class ProfileController extends AbstractController
     }
 
     #[Route('/projects/{id}/edit', name: 'app_profile_project_edit_view', methods: ['GET'])]
+    #[IsGranted('ROLE_CANDIDATE')]
     public function editProjectView(Project $project, InertiaService $inertia): Response
     {
         /** @var User|null $user */
@@ -619,6 +630,7 @@ class ProfileController extends AbstractController
     }
 
     #[Route('/projects/batch-delete', name: 'app_profile_project_batch_delete', methods: ['POST', 'DELETE'])]
+    #[IsGranted('ROLE_CANDIDATE')]
     public function batchDeleteProjects(Request $request, EntityManagerInterface $em): Response
     {
         /** @var User|null $user */
@@ -656,6 +668,7 @@ class ProfileController extends AbstractController
     }
 
     #[Route('/projects/{id}', name: 'app_profile_project_edit', methods: ['POST', 'PUT'], requirements: ['id' => '\d+'])]
+    #[IsGranted('ROLE_CANDIDATE')]
     public function editProject(Project $project, Request $request, EntityManagerInterface $em): Response
     {
         /** @var User|null $user */
@@ -691,6 +704,7 @@ class ProfileController extends AbstractController
     }
 
     #[Route('/projects/{id}', name: 'app_profile_project_delete', methods: ['DELETE', 'POST'], requirements: ['id' => '\d+'])]
+    #[IsGranted('ROLE_CANDIDATE')]
     public function deleteProject(Project $project, EntityManagerInterface $em): Response
     {
         /** @var User|null $user */

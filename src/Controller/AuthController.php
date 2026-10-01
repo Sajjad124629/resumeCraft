@@ -3,7 +3,10 @@
 namespace App\Controller;
 
 use App\Entity\CandidateProfile;
+use App\Entity\Role;
 use App\Entity\User;
+use App\Entity\UserDetails;
+use App\Repository\UserRepository;
 use App\Service\InertiaService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -16,6 +19,7 @@ use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Mime\Address;
 use SymfonyCasts\Bundle\VerifyEmail\VerifyEmailHelperInterface;
 use SymfonyCasts\Bundle\VerifyEmail\Exception\VerifyEmailExceptionInterface;
@@ -26,7 +30,7 @@ use SymfonyCasts\Bundle\VerifyEmail\Exception\VerifyEmailExceptionInterface;
 class AuthController extends AbstractController
 {
     public function __construct(
-        private \Symfony\Bundle\SecurityBundle\Security $security
+        private Security $security
     ) {}
 
     #[Route('/login', name: 'app_login', methods: ['GET', 'POST'])]
@@ -65,7 +69,7 @@ class AuthController extends AbstractController
 
             $email = trim($data['email'] ?? '');
             $password = $data['password'] ?? '';
-            $name = trim($data['name'] ?? ($data['firstName'] ?? ''));
+            $name = trim($data['name'] ?? '');
 
             if (!$email) {
                 return $inertia->render('auth/Register', [
@@ -103,12 +107,12 @@ class AuthController extends AbstractController
             $user->setIsVerified(false);
 
             $requestedRole = ($data['role'] ?? 'ROLE_CANDIDATE') === 'ROLE_RECRUITER' ? 'ROLE_RECRUITER' : 'ROLE_CANDIDATE';
-            $selectedRole = $entityManager->getRepository(\App\Entity\Role::class)->findOneBy(['slug' => $requestedRole]);
+            $selectedRole = $entityManager->getRepository(Role::class)->findOneBy(['slug' => $requestedRole]);
             if ($selectedRole) {
                 $user->setRole($selectedRole);
             }
 
-            $details = new \App\Entity\UserDetails();
+            $details = new UserDetails();
             $details->setUser($user);
             $nameParts = explode(' ', $name, 2);
             $details->setFirstName($nameParts[0] ?? $name);
@@ -174,7 +178,7 @@ class AuthController extends AbstractController
     }
 
     #[Route('/verify/email', name: 'app_verify_email')]
-    public function verifyUserEmail(Request $request, VerifyEmailHelperInterface $verifyEmailHelper, \App\Repository\UserRepository $userRepository, EntityManagerInterface $entityManager): Response
+    public function verifyUserEmail(Request $request, VerifyEmailHelperInterface $verifyEmailHelper, UserRepository $userRepository, EntityManagerInterface $entityManager): Response
     {
         $id = $request->query->get('id');
 
@@ -189,7 +193,7 @@ class AuthController extends AbstractController
         }
 
         try {
-            $verifyEmailHelper->validateEmailConfirmation($request->getUri(), $user->getId(), $user->getEmail());
+            $verifyEmailHelper->validateEmailConfirmationFromRequest($request, (string) $user->getId(), $user->getEmail());
         } catch (VerifyEmailExceptionInterface $e) {
             $this->addFlash('error', $e->getReason());
             return $this->redirectToRoute('app_register');
