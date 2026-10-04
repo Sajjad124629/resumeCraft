@@ -144,7 +144,7 @@ class AdminController extends AbstractController
                 'isVerified' => $u->isVerified(),
                 'candidateProfileId' => $u->getCandidateProfile()?->getId(),
                 'fullName' => $u->getUserDetails() ? ($u->getUserDetails()->getFirstName() . ' ' . $u->getUserDetails()->getLastName()) : 'User',
-                'location' => $u->getCandidateProfile()?->getLocation() ?? 'N/A',
+                'location' => $u->getUserDetails()?->getLocation() ?? $u->getCandidateProfile()?->getLocation() ?? 'N/A',
                 'isSelf' => $this->getUser()?->getId() === $u->getId(),
             ];
         }, $slicedUsers);

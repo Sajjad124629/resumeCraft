@@ -25,6 +25,7 @@ import {
 import { ref, watch, computed } from 'vue';
 import { useDebounceFn } from '@vueuse/core';
 import AchievementPanel from './AchievementPanel.vue';
+import SalesforceSyncModal from '@/Components/SalesforceSyncModal.vue';
 
 defineOptions({ layout: AppLayout });
 
@@ -40,6 +41,17 @@ const props = defineProps<{
     isAdminEditing?: boolean;
     targetCandidateId?: number;
 }>();
+
+const showSalesforceModal = ref(false);
+
+const targetUserForSalesforce = computed(() => {
+    return {
+        id: props.profile?.userId || (page.props.auth as any)?.user?.id,
+        email: props.profile?.email || (page.props.auth as any)?.user?.email,
+        role: (page.props.auth as any)?.user?.role,
+        roleName: props.profile?.roleName || (page.props.auth as any)?.user?.roleName || 'Candidate',
+    };
+});
 
 const headTitle = computed(() => {
     return props.isAdminEditing
@@ -532,18 +544,28 @@ async function deleteSelectedCvs() {
             </TextLink>
         </div>
 
-        <div class="flex justify-between items-center mb-4">
+        <div class="flex flex-wrap justify-between items-center mb-4 gap-3">
             <h2
                 class="text-2xl font-black tracking-tight text-gray-900 dark:text-white-light flex items-center gap-2.5">
                 <span
                     class="inline-block w-2.5 h-7 rounded-full bg-gradient-to-b from-primary to-blue-400 shadow-[0_0_12px_rgba(67,97,238,0.5)]"></span>
                 {{ headingText }}
             </h2>
-            <TextLink v-if="profile.id" :href="route('app_profile_public', { id: profile.id })">
-                <Button size="sm" variant="outline" class="flex gap-1.5 items-center">
-                    <HugeiconsIcon :icon="ViewIcon" :size="16" /> View Public Profile
+            <div class="flex items-center gap-2">
+                <Button size="sm" variant="outline"
+                    class="flex gap-1.5 items-center border-sky-300 text-sky-600 hover:bg-sky-50 dark:border-sky-800 dark:text-sky-400 dark:hover:bg-sky-950/40 rounded-xl"
+                    @click="showSalesforceModal = true">
+                    <svg class="w-4 h-4 text-sky-500 dark:text-sky-400" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z" />
+                    </svg>
+                    Sync to Salesforce
                 </Button>
-            </TextLink>
+                <TextLink v-if="profile.id" :href="route('app_profile_public', { id: profile.id })">
+                    <Button size="sm" variant="outline" class="flex gap-1.5 items-center">
+                        <HugeiconsIcon :icon="ViewIcon" :size="16" /> View Public Profile
+                    </Button>
+                </TextLink>
+            </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -601,6 +623,25 @@ async function deleteSelectedCvs() {
                             <Button type="button" size="sm" variant="outline" class="text-xs h-8 rounded-lg"
                                 @click="showPasswordModal = true">
                                 {{ __('Change Password') }}
+                            </Button>
+                        </div>
+
+                        <!-- Salesforce CRM Sync Action -->
+                        <div
+                            class="pt-4 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center">
+                            <div>
+                                <span class="text-xs font-semibold text-sky-600 dark:text-sky-400 flex items-center gap-1.5">
+                                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z" />
+                                    </svg>
+                                    {{ __('Salesforce CRM') }}
+                                </span>
+                                <span class="text-[11px] text-gray-400">{{ __('Sync user to Salesforce CRM') }}</span>
+                            </div>
+                            <Button type="button" size="sm" variant="outline"
+                                class="text-xs h-8 rounded-lg border-sky-300 text-sky-600 hover:bg-sky-50 dark:border-sky-800 dark:text-sky-400 dark:hover:bg-sky-950/40"
+                                @click="showSalesforceModal = true">
+                                {{ __('Sync CRM') }}
                             </Button>
                         </div>
                     </div>
@@ -1181,5 +1222,12 @@ async function deleteSelectedCvs() {
                 </form>
             </div>
         </div>
+
+        <!-- Salesforce Integration Modal -->
+        <SalesforceSyncModal
+            v-model="showSalesforceModal"
+            :user="targetUserForSalesforce"
+            :profile="props.profile"
+        />
     </div>
 </template>

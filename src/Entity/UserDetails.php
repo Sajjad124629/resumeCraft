@@ -29,6 +29,9 @@ class UserDetails
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $photo = null;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $location = null;
+
     #[ORM\Column(type: 'integer')]
     #[ORM\Version]
     private ?int $version = 1;
@@ -94,6 +97,18 @@ class UserDetails
     public function setPhoto(?string $photo): static
     {
         $this->photo = $photo;
+
+        return $this;
+    }
+
+    public function getLocation(): ?string
+    {
+        return $this->location;
+    }
+
+    public function setLocation(?string $location): static
+    {
+        $this->location = $location;
 
         return $this;
     }

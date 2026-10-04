@@ -60,6 +60,11 @@ class ProfileController extends AbstractController
             return $this->redirectToRoute('app_login');
         }
 
+        $roles = $user->getRoles();
+        if (in_array('ROLE_ADMIN', $roles) || in_array('ROLE_RECRUITER', $roles)) {
+            return $this->redirectToRoute('app_profile_settings');
+        }
+
         $candidate = $user->getCandidateProfile();
         if (!$candidate) {
             return $this->redirectToRoute('app_profile_settings');
@@ -113,7 +118,7 @@ class ProfileController extends AbstractController
                 'lastName' => $details?->getLastName() ?? '',
                 'phone' => $details?->getPhone() ?? '',
                 'photo' => $details?->getPhoto() ?? '',
-                'location' => $candidate?->getLocation() ?? '',
+                'location' => $details?->getLocation() ?? $candidate?->getLocation() ?? '',
             ],
         ]);
     }
@@ -148,9 +153,10 @@ class ProfileController extends AbstractController
         $freshUser->setUserDetails($details);
 
         if (array_key_exists('location', $data)) {
-            $candidate = $freshUser->getCandidateProfile();
-            if ($candidate) {
-                $candidate->setLocation($data['location'] ? trim($data['location']) : null);
+            $locationValue = $data['location'] ? trim($data['location']) : null;
+            $details->setLocation($locationValue);
+            if ($candidate = $freshUser->getCandidateProfile()) {
+                $candidate->setLocation($locationValue);
             }
         }
 
@@ -383,8 +389,12 @@ class ProfileController extends AbstractController
         return $inertia->render('profile/Index', [
             'profile' => [
                 'id' => $candidate->getId(),
+                'userId' => $candidate->getUser()->getId(),
+                'email' => $candidate->getUser()->getEmail(),
+                'roleName' => $candidate->getUser()->getRole()?->getName() ?? 'Candidate',
                 'firstName' => $candidate->getUser()->getUserDetails()?->getFirstName(),
                 'lastName' => $candidate->getUser()->getUserDetails()?->getLastName(),
+                'phone' => $candidate->getUser()->getUserDetails()?->getPhone() ?? '',
                 'location' => $candidate->getLocation(),
                 'photo' => $candidate->getUser()->getUserDetails()?->getPhoto(),
                 'version' => $candidate->getVersion(),
@@ -544,7 +554,10 @@ class ProfileController extends AbstractController
 
         if (isset($data['firstName'])) $details->setFirstName(trim($data['firstName']));
         if (isset($data['lastName'])) $details->setLastName(trim($data['lastName']));
-        if (isset($data['location'])) $candidate->setLocation($data['location']);
+        if (isset($data['location'])) {
+            $candidate->setLocation($data['location']);
+            $details->setLocation($data['location']);
+        }
         if (array_key_exists('photo', $data)) {
             $details->setPhoto($data['photo']);
         }

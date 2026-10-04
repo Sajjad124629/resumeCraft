@@ -236,7 +236,7 @@ const onAvatarError = (e: Event) => {
                                             </div>
                                         </div>
                                     </li>
-                                    <li v-if="user?.candidateProfileId">
+                                    <li v-if="user?.candidateProfileId && !user?.roles?.includes('ROLE_ADMIN') && !user?.roles?.includes('ROLE_RECRUITER')">
                                         <TextLink :href="route('app_profile_index')"
                                             class="dark:hover:text-white flex items-center px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-700/40"
                                             @click="close()">

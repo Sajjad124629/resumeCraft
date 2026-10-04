@@ -107,6 +107,10 @@ const menuItems = computed<MenuItem[]>(() => {
         },
     ].filter(item => {
         if (item.candidateOnly) {
+            const userRoles = page.props.auth?.user?.roles || [];
+            if (userRoles.includes('ROLE_ADMIN') || userRoles.includes('ROLE_RECRUITER')) {
+                return false;
+            }
             return !!(page.props.auth as any)?.user?.candidateProfileId;
         }
         if (item.adminOnly) {

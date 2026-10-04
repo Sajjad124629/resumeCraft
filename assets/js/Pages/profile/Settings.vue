@@ -7,12 +7,14 @@ import { Input } from '@/Components/ui/input';
 import { Label } from '@/Components/ui/label';
 import InputError from '@/Components/InputError.vue';
 import CloudImageUpload from '@/Components/CloudImageUpload.vue';
-import { inject } from 'vue';
+import SalesforceSyncModal from '@/Components/SalesforceSyncModal.vue';
+import { inject, ref } from 'vue';
 
 defineOptions({ layout: AppLayout });
 
 const page = usePage();
 const __ = inject<any>('__', (key: string) => key);
+const showSalesforceModal = ref(false);
 
 const props = defineProps<{
     user: {
@@ -109,6 +111,14 @@ function updatePassword() {
                             <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ __('Profile Information') }}
                             </h3>
                         </div>
+                        <Button type="button" size="sm" variant="outline"
+                            class="flex items-center gap-1.5 border-sky-300 text-sky-600 hover:bg-sky-50 dark:border-sky-800 dark:text-sky-400 dark:hover:bg-sky-950/40 rounded-xl text-xs font-semibold px-3 py-1.5"
+                            @click="showSalesforceModal = true">
+                            <svg class="w-4 h-4 text-sky-500 dark:text-sky-400" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z" />
+                            </svg>
+                            <span>{{ __('Sync to Salesforce') }}</span>
+                        </Button>
                     </div>
 
                     <form @submit.prevent="saveProfile" class="space-y-4">
@@ -154,7 +164,7 @@ function updatePassword() {
 
                         <div>
                             <Label for="email">{{ __('Email Address') }}</Label>
-                            <Input id="email" type="email" :value="user.email" disabled
+                            <Input id="email" type="email" :modelValue="user.email" disabled
                                 class="form-input mt-1.5 block w-full rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-500 cursor-not-allowed" />
                             <p class="text-[11px] text-gray-400 mt-1">{{ __('Email is linked to your account authentication.') }}</p>
                         </div>
@@ -218,5 +228,12 @@ function updatePassword() {
                 </div>
             </div>
         </div>
+
+        <!-- Salesforce Integration Modal -->
+        <SalesforceSyncModal
+            v-model="showSalesforceModal"
+            :user="props.user"
+            :profile="props.profile"
+        />
     </div>
 </template>

@@ -339,6 +339,9 @@ class SeedDemoDataCommand extends Command
                 $details->setUser($user);
                 $details->setFirstName($uc['first']);
                 $details->setLastName($uc['last']);
+                if (!empty($uc['location'])) {
+                    $details->setLocation($uc['location']);
+                }
                 $this->em->persist($details);
 
                 if ($uc['isCandidate']) {
