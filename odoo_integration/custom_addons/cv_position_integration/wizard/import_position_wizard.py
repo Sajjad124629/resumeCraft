@@ -172,12 +172,22 @@ class ImportPositionWizard(models.TransientModel):
             'cv_line_ids': cv_vals,
         })
 
-        # Open the imported position form view
         return {
-            'type': 'ir.actions.act_window',
-            'name': 'Position Details',
-            'res_model': 'cv.position',
-            'res_id': position_record.id,
-            'view_mode': 'form',
-            'target': 'current',
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Import Successful!',
+                'message': f'Position "{position_record.name}" has been successfully imported.',
+                'type': 'success',
+                'sticky': False,
+                'next': {
+                    'type': 'ir.actions.act_window',
+                    'name': 'Positions & Aggregates',
+                    'res_model': 'cv.position',
+                    'view_mode': 'tree,form',
+                    'views': [(False, 'tree'), (False, 'form')],
+                    'target': 'current',
+                },
+            }
         }
+

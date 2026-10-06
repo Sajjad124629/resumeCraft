@@ -138,7 +138,18 @@ class CvPosition(models.Model):
         wizard = self.env['cv.import.wizard'].create({
             'api_token': self.api_token,
         })
-        return wizard.action_import()
+        wizard.action_import()
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Data Refreshed!',
+                'message': f'Latest data for "{self.name}" refreshed successfully!',
+                'type': 'success',
+                'sticky': False,
+                'next': {'type': 'ir.actions.client', 'tag': 'reload'},
+            }
+        }
 
     def action_sync_attributes_global(self):
         """Sync attributes from Symfony API"""

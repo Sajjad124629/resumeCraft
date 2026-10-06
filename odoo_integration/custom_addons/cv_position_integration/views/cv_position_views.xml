@@ -37,8 +37,9 @@
                     </div>
 
                     <div class="mb-4">
-                        <h2 class="mb-1 text-primary fw-bold">Create Position</h2>
-                        <p class="text-muted fst-italic mb-0 small">The field labels marked with * are required input fields.</p>
+                        <h2 class="mb-1 text-primary fw-bold" invisible="id != False">Create Position</h2>
+                        <h2 class="mb-1 text-primary fw-bold" invisible="id == False">Position Details</h2>
+                        <p class="text-muted fst-italic mb-0 small" invisible="id != False">The field labels marked with * are required input fields.</p>
                     </div>
 
                     <!-- Row 1: Title, Company, Level -->
