@@ -57,6 +57,9 @@ class Position
     #[ORM\Version]
     private ?int $version = 1;
 
+    #[ORM\Column(length: 64, unique: true, nullable: true)]
+    private ?string $apiToken = null;
+
     public function __construct()
     {
         $this->attributes = new ArrayCollection();
@@ -202,5 +205,24 @@ class Position
     {
         $this->projectTags = $projectTags;
         return $this;
+    }
+
+    public function getApiToken(): ?string
+    {
+        return $this->apiToken;
+    }
+
+    public function setApiToken(?string $apiToken): static
+    {
+        $this->apiToken = $apiToken;
+        return $this;
+    }
+
+    public function ensureApiToken(): string
+    {
+        if (!$this->apiToken) {
+            $this->apiToken = bin2hex(random_bytes(32));
+        }
+        return $this->apiToken;
     }
 }

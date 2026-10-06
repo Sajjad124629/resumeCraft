@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_cv_connection_settings_wizard_form" model="ir.ui.view">
+        <field name="name">cv.connection.settings.wizard.form</field>
+        <field name="model">cv.connection.settings.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Course Project Connection &amp; Live URL">
+                <sheet>
+                    <div class="alert alert-info" role="alert">
+                        Configure the URL of your <strong>Course Project (Symfony App)</strong> below.<br/>
+                        • For local Docker setup: <code>http://172.17.0.1:8000</code> or <code>http://host.docker.internal:8000</code><br/>
+                        • For live deployment: Enter your public domain, e.g. <code>https://your-domain.com</code>
+                    </div>
+                    <group>
+                        <field name="symfony_url" string="Course Project URL" placeholder="https://your-domain.com or http://172.17.0.1:8000"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_save_and_test" string="Save &amp; Test Connection" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_cv_connection_settings_wizard" model="ir.actions.act_window">
+        <field name="name">Settings &amp; URL</field>
+        <field name="res_model">cv.connection.settings.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

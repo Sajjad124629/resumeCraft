@@ -193,11 +193,16 @@ class PositionController extends AbstractController
     }
 
     #[Route('/{id}', name: 'app_position_show', methods: ['GET'])]
-    public function show(Position $position, InertiaService $inertia): Response
+    public function show(Position $position, InertiaService $inertia, EntityManagerInterface $em): Response
     {
         /** @var User|null $user */
         $user = $this->getUser();
         $isRecruiter = $user && (in_array('ROLE_RECRUITER', $user->getRoles()) || in_array('ROLE_ADMIN', $user->getRoles()));
+
+        if ($isRecruiter && !$position->getApiToken()) {
+            $position->ensureApiToken();
+            $em->flush();
+        }
 
         $attributes = array_map(fn(Attribute $a) => [
             'id' => $a->getId(),
@@ -238,6 +243,7 @@ class PositionController extends AbstractController
                 'projectTags' => $position->getProjectTags() ?? [],
                 'attributes' => $attributes,
                 'version' => $position->getVersion(),
+                'apiToken' => $position->getApiToken(),
                 'cvs' => $cvsData,
                 'accessRules' => array_map(fn($r) => [
                     'attributeId' => $r->getAttribute()->getId(),
@@ -283,8 +289,13 @@ class PositionController extends AbstractController
 
     #[Route('/{id}/edit', name: 'app_position_edit_view', methods: ['GET'])]
     #[IsGranted('ROLE_RECRUITER')]
-    public function editView(Position $position, AttributeRepository $attributeRepo, InertiaService $inertia): Response
+    public function editView(Position $position, AttributeRepository $attributeRepo, InertiaService $inertia, EntityManagerInterface $em): Response
     {
+        if (!$position->getApiToken()) {
+            $position->ensureApiToken();
+            $em->flush();
+        }
+
         return $inertia->render('positions/Edit', [
             'position' => [
                 'id' => $position->getId(),
@@ -297,6 +308,7 @@ class PositionController extends AbstractController
                 'projectTags' => $position->getProjectTags() ?? [],
                 'attributes' => array_map(fn($a) => $a->getId(), $position->getAttributes()->toArray()),
                 'version' => $position->getVersion(),
+                'apiToken' => $position->getApiToken(),
                 'accessRules' => array_map(fn($r) => [
                     'attributeId' => $r->getAttribute()->getId(),
                     'operator' => $r->getOperator(),
@@ -304,6 +316,19 @@ class PositionController extends AbstractController
                 ], $position->getAccessRules()->toArray()),
             ],
             'availableAttributes' => $attributeRepo->findAllForSelect(),
+        ]);
+    }
+
+    #[Route('/{id}/generate-token', name: 'app_position_generate_token', methods: ['POST'])]
+    #[IsGranted('ROLE_RECRUITER')]
+    public function generateToken(Position $position, EntityManagerInterface $em): Response
+    {
+        $position->setApiToken(bin2hex(random_bytes(32)));
+        $em->flush();
+
+        return $this->json([
+            'status' => 'success',
+            'apiToken' => $position->getApiToken(),
         ]);
     }
 
@@ -373,10 +398,49 @@ class PositionController extends AbstractController
     #[IsGranted('ROLE_RECRUITER')]
     public function delete(Position $position, EntityManagerInterface $em): Response
     {
+        $externalId = $position->getId();
+        $apiToken = $position->getApiToken();
+
         $em->remove($position);
         $em->flush();
+
+        // Notify Odoo to delete matching position
+        $this->notifyOdooPositionDeleted($externalId, $apiToken);
+
         $this->addFlash('success', 'Position deleted successfully.');
         return $this->redirectToRoute('app_position_index', [], Response::HTTP_SEE_OTHER);
+    }
+
+    private function notifyOdooPositionDeleted(?int $externalId, ?string $apiToken): void
+    {
+        if (!$externalId && !$apiToken) {
+            return;
+        }
+
+        $odooUrl = $_ENV['ODOO_URL'] ?? 'http://127.0.0.1:8069';
+        $endpoint = rtrim($odooUrl, '/') . '/api/cv/positions/delete';
+
+        $payload = json_encode([
+            'external_id' => $externalId,
+            'api_token' => $apiToken,
+        ]);
+
+        try {
+            $ch = curl_init($endpoint);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Content-Type: application/json',
+                'User-Agent: Symfony-CV-Integration/1.0',
+            ]);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 3);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
+            curl_exec($ch);
+            curl_close($ch);
+        } catch (\Throwable $e) {
+            // Silently ignore if Odoo is temporarily unreachable
+        }
     }
 
     #[Route('/{id}/export', name: 'app_position_export', methods: ['GET'])]

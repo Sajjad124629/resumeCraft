@@ -46,6 +46,16 @@ function generateCv() {
     router.post(route('app_cv_generate', { id: props.position.id }));
 }
 
+const tokenCopied = ref(false);
+async function copyApiToken(token: string) {
+    if (!token) return;
+    await navigator.clipboard.writeText(token);
+    tokenCopied.value = true;
+    setTimeout(() => {
+        tokenCopied.value = false;
+    }, 2000);
+}
+
 // Discussions
 const posts = ref<any[]>([]);
 const newPost = ref('');
@@ -261,6 +271,35 @@ onUnmounted(() => {
                         </li>
                         <li v-if="position.attributes.length === 0" class="text-gray-500">No specific attributes required.</li>
                     </ul>
+                </div>
+
+                <!-- Odoo Integration Token -->
+                <div v-if="isRecruiter && position.apiToken" class="panel border-t-4 border-t-purple-600 bg-white dark:bg-gray-800 shadow-sm rounded-lg p-4">
+                    <div class="flex items-center justify-between border-b pb-2 mb-3">
+                        <h3 class="font-semibold text-base flex items-center gap-1.5 text-gray-900 dark:text-white">
+                            <span class="p-1 rounded bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m9 8 6 4-6 4Z"/></svg>
+                            </span>
+                            Odoo Integration
+                        </h3>
+                        <span class="text-[10px] font-semibold uppercase px-2 py-0.5 bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 rounded">
+                            API Token
+                        </span>
+                    </div>
+                    <p class="text-xs text-gray-500 mb-3 leading-relaxed">
+                        Use this token in your external Odoo application to import this position and view aggregated metrics.
+                    </p>
+                    <div class="p-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded font-mono text-[11px] text-gray-800 dark:text-gray-200 break-all select-all mb-3">
+                        {{ position.apiToken }}
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <Button size="sm" variant="outline" class="flex-1 text-xs h-8 font-medium" @click="copyApiToken(position.apiToken)">
+                            {{ tokenCopied ? 'Copied!' : 'Copy Token' }}
+                        </Button>
+                        <a :href="`/api/positions/${position.apiToken}/aggregated`" target="_blank" class="inline-flex items-center justify-center text-xs px-2.5 h-8 rounded-md bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 hover:bg-purple-100 font-medium transition">
+                            View JSON
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>

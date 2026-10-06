@@ -53,6 +53,40 @@ const submit = () => {
     form.projectTags = tagsInput.value.split(',').map((t: string) => t.trim()).filter(Boolean);
     form.put(route('app_position_edit', { id: props.position.id }));
 };
+
+const apiToken = ref(props.position.apiToken || '');
+const isCopied = ref(false);
+const isRegenerating = ref(false);
+
+async function copyToken() {
+    if (!apiToken.value) return;
+    await navigator.clipboard.writeText(apiToken.value);
+    isCopied.value = true;
+    setTimeout(() => {
+        isCopied.value = false;
+    }, 2000);
+}
+
+async function regenerateToken() {
+    if (!confirm('Are you sure you want to regenerate this API token? Any existing integrations using this token will stop working.')) {
+        return;
+    }
+    isRegenerating.value = true;
+    try {
+        const response = await fetch(route('app_position_generate_token', { id: props.position.id }), {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            }
+        });
+        const data = await response.json();
+        if (data.apiToken) {
+            apiToken.value = data.apiToken;
+        }
+    } finally {
+        isRegenerating.value = false;
+    }
+}
 </script>
 
 <template>
@@ -176,6 +210,35 @@ const submit = () => {
                                     :stroke-width="1.5" />
                             </Button>
                         </div>
+                    </div>
+                </div>
+
+                <!-- External Integration / API Token (Odoo) -->
+                <div class="mt-8 mb-6 border-t pt-4 border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center justify-between mb-2">
+                        <h5 class="font-semibold text-lg flex items-center gap-2">
+                            <span class="p-1 rounded bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m9 8 6 4-6 4Z"/></svg>
+                            </span>
+                            {{ __('External Integration & API Token (Odoo)') }}
+                        </h5>
+                        <a :href="`/api/positions/${apiToken}/aggregated`" target="_blank" class="text-xs font-semibold text-purple-600 dark:text-purple-400 hover:underline inline-flex items-center gap-1 bg-purple-50 dark:bg-purple-900/20 px-2.5 py-1 rounded-md">
+                            <span>{{ __('Test Aggregated API') }}</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                        </a>
+                    </div>
+                    <p class="text-sm text-gray-500 mb-3">
+                        {{ __('Use this API Token in your external Odoo application to import this position along with aggregated candidate metrics (averages, min/max, popular values).') }}
+                    </p>
+
+                    <div class="flex items-center gap-2 max-w-3xl">
+                        <input type="text" readonly :value="apiToken" class="form-input font-mono text-xs bg-gray-50 dark:bg-gray-900 border-gray-300 dark:border-gray-700 rounded select-all flex-1 py-2 px-3" />
+                        <Button type="button" variant="outline" size="sm" @click="copyToken" class="h-9 font-medium">
+                            {{ isCopied ? __('Copied!') : __('Copy Token') }}
+                        </Button>
+                        <Button type="button" variant="ghost" size="sm" :disabled="isRegenerating" @click="regenerateToken" class="h-9 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20">
+                            {{ isRegenerating ? __('Generating...') : __('Regenerate') }}
+                        </Button>
                     </div>
                 </div>
 

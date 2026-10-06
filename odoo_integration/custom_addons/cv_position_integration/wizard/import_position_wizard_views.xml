@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Import Position Wizard Form View -->
+    <record id="view_cv_import_wizard_form" model="ir.ui.view">
+        <field name="name">cv.import.wizard.form</field>
+        <field name="model">cv.import.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Import Position from Course Project">
+                <sheet>
+                    <div class="alert alert-info" role="alert">
+                        Enter the <strong>API Token</strong> generated from your Course Project Position form to import the position and its aggregated attribute statistics into Odoo.
+                    </div>
+                    <group>
+                        <group>
+                            <field name="api_token" placeholder="Paste generated API Token here..."/>
+                            <field name="api_url"/>
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_import" string="Import Position &amp; Aggregates" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Wizard Action -->
+    <record id="action_cv_import_wizard" model="ir.actions.act_window">
+        <field name="name">Import Position</field>
+        <field name="res_model">cv.import.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

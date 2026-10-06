@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Top-level Menu Bar Item -->
+    <menuitem id="menu_cv_root"
+              name="Course Project"
+              web_icon="base,static/description/icon.png"
+              sequence="10"/>
+
+    <!-- Main Section Menu -->
+    <menuitem id="menu_cv_positions_cat"
+              name="Positions &amp; Sync"
+              parent="menu_cv_root"
+              sequence="10"/>
+
+    <!-- Action Menu: Positions List -->
+    <menuitem id="menu_cv_positions_list"
+              name="Positions"
+              parent="menu_cv_positions_cat"
+              action="action_cv_position"
+              sequence="10"/>
+
+    <!-- Action Menu: Attributes -->
+    <menuitem id="menu_cv_attributes_list"
+              name="Required Attributes"
+              parent="menu_cv_positions_cat"
+              action="action_cv_attribute"
+              sequence="20"/>
+
+    <!-- Action Menu: Import via Token Wizard -->
+    <menuitem id="menu_cv_import_wizard_action"
+              name="Import via Token"
+              parent="menu_cv_positions_cat"
+              action="action_cv_import_wizard"
+              sequence="30"/>
+
+    <!-- Action Menu: Settings & Live URL -->
+    <menuitem id="menu_cv_connection_settings_action"
+              name="Settings &amp; URL"
+              parent="menu_cv_positions_cat"
+              action="action_cv_connection_settings_wizard"
+              sequence="40"/>
+</odoo>

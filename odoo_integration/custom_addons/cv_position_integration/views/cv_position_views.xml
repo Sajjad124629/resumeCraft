@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- List / Tree View for cv.position -->
+    <record id="view_cv_position_tree" model="ir.ui.view">
+        <field name="name">cv.position.tree</field>
+        <field name="model">cv.position</field>
+        <field name="arch" type="xml">
+            <tree string="Positions" create="true" delete="true">
+                <field name="name" string="Position Title"/>
+                <field name="company"/>
+                <field name="level"/>
+                <field name="max_projects" string="Max Projects"/>
+                <field name="project_tags" string="Required Technologies"/>
+                <field name="total_cvs" string="CV Count"/>
+                <field name="external_id" string="Course Project ID"/>
+                <field name="last_imported_at" string="Last Synced"/>
+                <field name="is_public" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Form / Detail View for cv.position -->
+    <record id="view_cv_position_form" model="ir.ui.view">
+        <field name="name">cv.position.form</field>
+        <field name="model">cv.position</field>
+        <field name="arch" type="xml">
+            <form string="Position Details" create="true" delete="true">
+                <header>
+                    <button name="action_export_to_symfony" string="Export to Course Project" type="object" class="btn-primary" invisible="external_id != False" icon="fa-cloud-upload"/>
+                    <button name="action_refresh_data" string="Refresh Data from API" type="object" class="oe_highlight" invisible="external_id == False" icon="fa-refresh"/>
+                    <button name="action_sync_attributes_global" string="Sync Attributes from Symfony" type="object" class="btn-secondary" icon="fa-tags"/>
+                    <button name="%(action_cv_import_wizard)d" string="Import by Token" type="action" class="btn-secondary" icon="fa-download"/>
+                </header>
+                <sheet>
+                    <div class="alert alert-warning" role="alert" invisible="external_id != False">
+                        <strong>Draft Position:</strong> This position was created in Odoo. Click <strong>"Export to Course Project"</strong> above to send it to the Symfony Course Project.
+                    </div>
+
+                    <div class="mb-4">
+                        <h2 class="mb-1 text-primary fw-bold">Create Position</h2>
+                        <p class="text-muted fst-italic mb-0 small">The field labels marked with * are required input fields.</p>
+                    </div>
+
+                    <!-- Row 1: Title, Company, Level -->
+                    <group col="3" class="mb-2">
+                        <field name="name" string="Title*" placeholder="Position Title" required="1"/>
+                        <field name="company" string="Company" placeholder="Company Name"/>
+                        <field name="level" string="Level" placeholder="e.g. Senior, Junior"/>
+                    </group>
+
+                    <!-- Row 2: Description -->
+                    <group class="mb-2">
+                        <field name="short_description" string="Description" placeholder="Short Description"/>
+                    </group>
+
+                    <!-- Row 3: Max Projects Allowed, Is Public -->
+                    <group col="2" class="mb-2">
+                        <field name="max_projects" string="Max Projects Allowed"/>
+                        <field name="is_public" string="Is Public" widget="boolean_toggle"/>
+                    </group>
+
+                    <!-- Row 4: Relevant Project Technology Tags -->
+                    <group class="mb-1">
+                        <field name="project_tags" string="Relevant Project Technology Tags" placeholder="e.g. PHP, Vue.js, Docker (comma-separated)"/>
+                    </group>
+                    <div class="text-muted small mb-4 ps-2 fst-italic">
+                        Candidate projects containing these tags will be automatically selected for the generated CV (up to max projects).
+                    </div>
+
+                    <!-- Required Attributes Section -->
+                    <div class="mt-4 pt-3 border-top">
+                        <h4 class="fw-bold mb-3">Required Attributes</h4>
+                        <field name="required_attribute_ids" widget="many2many_checkboxes" nolabel="1"/>
+                    </div>
+
+                    <!-- Access Rules Dynamic Table -->
+                    <div class="mt-4 pt-3 border-top">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4 class="fw-bold mb-0">Access Rules</h4>
+                        </div>
+                        <field name="access_rule_ids" nolabel="1">
+                            <tree editable="bottom">
+                                <field name="attribute_id" string="Attribute" placeholder="Select Attribute"/>
+                                <field name="operator" string="Operator"/>
+                                <field name="value" string="Value" placeholder="Value"/>
+                            </tree>
+                        </field>
+                    </div>
+
+                    <!-- Tabs for Applications & Aggregations -->
+                    <notebook class="mt-4">
+                        <page string="Submitted Applications (CVs)" name="cvs_page" invisible="external_id == False">
+                            <field name="cv_line_ids" readonly="1">
+                                <tree string="Submitted CVs">
+                                    <field name="external_cv_id" string="CV ID"/>
+                                    <field name="candidate_name" string="Candidate Name"/>
+                                    <field name="status" string="Status" widget="badge"/>
+                                    <field name="likes" string="Likes"/>
+                                    <field name="created_at" string="Submission Date"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Attributes &amp; Aggregated Results" name="attributes_page" invisible="external_id == False">
+                            <field name="attribute_ids" readonly="1">
+                                <tree string="Aggregated Attributes" decoration-info="aggregation_kind == 'numeric'" decoration-success="aggregation_kind == 'text'">
+                                    <field name="attribute_title" string="Attribute Name"/>
+                                    <field name="attribute_type" string="Type"/>
+                                    <field name="aggregation_kind" string="Kind"/>
+                                    <field name="count" string="Responses"/>
+                                    <field name="summary" string="Aggregated Results (Avg / Min / Max / Popular)"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Integration Sync Details" name="integration_details">
+                            <group>
+                                <group string="External Identifiers">
+                                    <field name="external_id" string="Course Project ID"/>
+                                    <field name="last_imported_at"/>
+                                    <field name="api_token" readonly="1" string="Position API Token"/>
+                                </group>
+                                <group string="Statistics">
+                                    <field name="total_cvs" string="Submitted CVs Count"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="view_cv_position_search" model="ir.ui.view">
+        <field name="name">cv.position.search</field>
+        <field name="model">cv.position</field>
+        <field name="arch" type="xml">
+            <search string="Search Positions">
+                <field name="name" string="Position Title"/>
+                <field name="company"/>
+                <field name="level"/>
+                <group expand="0" string="Group By">
+                    <filter string="Company" name="group_by_company" context="{'group_by':'company'}"/>
+                    <filter string="Level" name="group_by_level" context="{'group_by':'level'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Window Action -->
+    <record id="action_cv_position" model="ir.actions.act_window">
+        <field name="name">Positions &amp; Aggregates</field>
+        <field name="res_model">cv.position</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_cv_position_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No positions found!
+            </p>
+            <p>
+                Click <strong>"New"</strong> to create a position in Odoo and export it to Course Project, or click <strong>"Import via Token"</strong> to import an existing position.
+            </p>
+        </field>
+    </record>
+
+    <!-- Attributes List View -->
+    <record id="view_cv_attribute_tree" model="ir.ui.view">
+        <field name="name">cv.attribute.tree</field>
+        <field name="model">cv.attribute</field>
+        <field name="arch" type="xml">
+            <tree string="Attributes" editable="bottom">
+                <field name="name" string="Attribute Name"/>
+                <field name="attr_type" string="Type"/>
+                <field name="external_id" string="Symfony ID" readonly="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Attributes Action -->
+    <record id="action_cv_attribute" model="ir.actions.act_window">
+        <field name="name">Required Attributes</field>
+        <field name="res_model">cv.attribute</field>
+        <field name="view_mode">tree</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Manage candidate attributes synchronized with the Symfony Course Project.
+            </p>
+        </field>
+    </record>
+</odoo>

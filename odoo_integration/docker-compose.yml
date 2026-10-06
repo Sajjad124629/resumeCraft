@@ -1,0 +1,36 @@
+version: "3.8"
+
+services:
+    db:
+        image: postgres:15
+        container_name: odoo_postgres
+        restart: unless-stopped
+        environment:
+            - POSTGRES_DB=postgres
+            - POSTGRES_USER=odoo
+            - POSTGRES_PASSWORD=odoo
+        volumes:
+            - odoo_db_data:/var/lib/postgresql/data
+
+    web:
+        image: odoo:17.0
+        container_name: odoo_web
+        restart: unless-stopped
+        depends_on:
+            - db
+        ports:
+            - "8069:8069"
+        environment:
+            - HOST=db
+            - USER=odoo
+            - PASSWORD=odoo
+        command: -- -d cv_odoo --db_host=db -r odoo -w odoo
+        volumes:
+            - ./custom_addons:/mnt/extra-addons
+            - odoo_web_data:/var/lib/odoo
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+
+volumes:
+    odoo_db_data:
+    odoo_web_data:

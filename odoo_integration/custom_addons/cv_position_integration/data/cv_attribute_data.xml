@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="attr_asd" model="cv.attribute">
+        <field name="name">asd</field>
+        <field name="external_id">2</field>
+        <field name="attr_type">text</field>
+    </record>
+
+    <record id="attr_notice_period" model="cv.attribute">
+        <field name="name">Available Notice Period</field>
+        <field name="external_id">10</field>
+        <field name="attr_type">period</field>
+    </record>
+
+    <record id="attr_career_start" model="cv.attribute">
+        <field name="name">Career Start Date</field>
+        <field name="external_id">12</field>
+        <field name="attr_type">date</field>
+    </record>
+
+    <record id="attr_cert_badges" model="cv.attribute">
+        <field name="name">Certification Badges</field>
+        <field name="external_id">11</field>
+        <field name="attr_type">image</field>
+    </record>
+
+    <record id="attr_english_level" model="cv.attribute">
+        <field name="name">English Level</field>
+        <field name="external_id">3</field>
+        <field name="attr_type">select</field>
+    </record>
+
+    <record id="attr_gpa" model="cv.attribute">
+        <field name="name">GPA</field>
+        <field name="external_id">4</field>
+        <field name="attr_type">number</field>
+    </record>
+
+    <record id="attr_ielts" model="cv.attribute">
+        <field name="name">IELTS Score</field>
+        <field name="external_id">5</field>
+        <field name="attr_type">number</field>
+    </record>
+
+    <record id="attr_portfolio_url" model="cv.attribute">
+        <field name="name">Portfolio URL</field>
+        <field name="external_id">9</field>
+        <field name="attr_type">string</field>
+    </record>
+
+    <record id="attr_presentation_skills" model="cv.attribute">
+        <field name="name">Presentation Skills</field>
+        <field name="external_id">7</field>
+        <field name="attr_type">select</field>
+    </record>
+
+    <record id="attr_professional_summary" model="cv.attribute">
+        <field name="name">Professional Summary</field>
+        <field name="external_id">8</field>
+        <field name="attr_type">text</field>
+    </record>
+
+    <record id="attr_remote_work" model="cv.attribute">
+        <field name="name">Remote Work Availability</field>
+        <field name="external_id">6</field>
+        <field name="attr_type">boolean</field>
+    </record>
+</odoo>
