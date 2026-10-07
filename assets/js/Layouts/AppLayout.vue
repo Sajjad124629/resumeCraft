@@ -5,9 +5,10 @@ import ThemeCustomizer from '@/Components/ThemeCustomizer.vue';
 import Sidebar from './app/Sidebar.vue';
 import Header from './app/Header.vue';
 import Footer from './app/Footer.vue';
+import SupportTicketModal from '@/Components/SupportTicketModal.vue';
 import Swal from 'sweetalert2'
 import { useAppStore } from '@/Stores/index'
-import { computed, onMounted, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { usePage } from '@inertiajs/vue3';
 import { Settings } from '@/types';
 
@@ -16,6 +17,8 @@ import appSetting from '@/app-setting';
 const store = useAppStore();
 const page = usePage();
 const settings = computed(() => page.props.settings as Settings);
+const isSupportTicketModalOpen = ref(false);
+
 defineProps<{
   errors?: any
   name?: string
@@ -27,7 +30,15 @@ defineProps<{
 }>()
 onMounted(() => {
     appSetting.init();
-    store.toggleMainLoader()
+    store.toggleMainLoader();
+    if (typeof window !== 'undefined') {
+        window.addEventListener('open-support-ticket', () => {
+            isSupportTicketModalOpen.value = true;
+        });
+        window.addEventListener('close-support-ticket', () => {
+            isSupportTicketModalOpen.value = false;
+        });
+    }
 })
 
 const showToast = (flash: any) => {
@@ -91,6 +102,23 @@ watch(
                     <Footer :settings="settings"/>
                 </div>
             </div>
+
+            <!-- Global Support Ticket Modal -->
+            <SupportTicketModal v-model="isSupportTicketModalOpen" />
+
+            <!-- Floating Help & Support Action Button (Accessible from any page) -->
+            <button
+                type="button"
+                @click="isSupportTicketModalOpen = true"
+                class="fixed bottom-6 right-6 z-30 flex items-center gap-2 px-3.5 py-2.5 bg-gradient-to-r from-primary to-blue-600 text-white rounded-full shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all text-xs font-bold group select-none cursor-pointer"
+                title="Help / Create Support Ticket"
+            >
+                <svg class="w-4 h-4 group-hover:rotate-12 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span class="hidden md:inline">Support Ticket</span>
+            </button>
         </div>
     </div>
 </template>
+

@@ -130,6 +130,30 @@ class InertiaService
             }
         }
 
+        $supportTicketStats = null;
+        $userTicketStats = null;
+        if ($user instanceof User) {
+            try {
+                /** @var \App\Repository\SupportTicketRepository $ticketRepo */
+                $ticketRepo = $this->em->getRepository(\App\Entity\SupportTicket::class);
+                if (in_array('ROLE_ADMIN', $user->getRoles(), true)) {
+                    $supportTicketStats = $ticketRepo->getStatusCounts();
+                }
+
+                $conn = $this->em->getConnection();
+                $activeCount = (int)$conn->executeQuery(
+                    "SELECT COUNT(*) FROM support_ticket WHERE user_id = :uid AND status != 'solved'",
+                    ['uid' => $user->getId()]
+                )->fetchOne();
+
+                $userTicketStats = [
+                    'activeCount' => $activeCount,
+                ];
+            } catch (\Throwable $e) {
+                // Ignore if table not ready
+            }
+        }
+
         $defaultProps = [
             'routes' => $this->getRoutes(),
             'settings' => [
@@ -138,6 +162,8 @@ class InertiaService
             ],
             'auth' => $authProp,
             'flash' => $flashProp,
+            'supportTicketStats' => $supportTicketStats,
+            'userTicketStats' => $userTicketStats,
             'languages' => [
                 ['code' => 'en', 'name' => 'English', 'image' => 'language/EN.svg'],
                 ['code' => 'es', 'name' => 'Spanish', 'image' => 'language/ES.svg'],

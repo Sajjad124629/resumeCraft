@@ -9,6 +9,7 @@ import IconSun from '@/Components/icon/icon-sun.vue';
 import IconMoon from '@/Components/icon/icon-moon.vue';
 import IconLaptop from '@/Components/icon/icon-laptop.vue';
 import IconUser from '@/Components/icon/icon-user.vue';
+import IconHelpCircle from '@/Components/icon/icon-help-circle.vue';
 // import IconMail from '@/components/icon/icon-mail.vue';
 // import IconLockDots from '@/components/icon/icon-lock-dots.vue';
 import IconLogout from '@/Components/icon/icon-logout.vue';
@@ -16,6 +17,13 @@ import { router, usePage } from '@inertiajs/vue3';
 import { Settings } from '@/types';
 import { computed, inject } from 'vue';
 import { route } from '@/route';
+
+function openSupportTicket() {
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('open-support-ticket'));
+    }
+}
+
 const store = useAppStore();
 const page = usePage();
 const __ = inject<any>('__', (key: string) => key);
@@ -167,7 +175,20 @@ const onAvatarError = (e: Event) => {
                             <icon-laptop class="w-4.5 h-4.5 text-purple-400" />
                         </a>
                     </div>
+
+                    <!-- Help / Support Ticket Button -->
+                    <button
+                        type="button"
+                        @click="openSupportTicket"
+                        class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-gray-100 dark:bg-gray-800 hover:text-primary hover:bg-gray-200 dark:hover:bg-gray-700 transition shadow-xs active:scale-95 text-gray-700 dark:text-gray-300 border border-gray-200/60 dark:border-gray-700/60"
+                        :title="__('Help / Create Support Ticket')"
+                    >
+                        <icon-help-circle class="w-4.5 h-4.5 text-primary" />
+                        <span class="text-xs font-bold hidden sm:inline">{{ __('Help') }}</span>
+                    </button>
+
                     <div class="dropdown shrink-0" v-if="(languages as []).length > 0">
+
                         <Popper :placement="store.rtlClass === 'rtl' ? 'bottom-end' : 'bottom-start'"
                             offsetDistance="8">
                             <button type="button"

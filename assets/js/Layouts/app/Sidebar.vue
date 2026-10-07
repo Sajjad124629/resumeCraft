@@ -62,12 +62,47 @@ interface MenuItem {
     roles?: string[];
     adminOnly?: boolean;
     candidateOnly?: boolean;
+    badge?: { text: string; color?: string };
 }
 
 const hasRole = (role: string) => {
     const userRoles = page.props.auth?.user?.roles || [];
     return userRoles.includes(role) || userRoles.includes('ROLE_ADMIN');
 };
+
+const supportTicketStats = computed(() => (page.props as any).supportTicketStats || null);
+const userTicketStats = computed(() => (page.props as any).userTicketStats || null);
+
+const ticketBadge = computed(() => {
+    if (!supportTicketStats.value) return undefined;
+    const openCount = supportTicketStats.value.open || 0;
+    if (openCount > 0) {
+        return {
+            text: `${openCount} open`,
+            color: 'bg-amber-500 text-white',
+        };
+    }
+    const total = supportTicketStats.value.total || 0;
+    if (total > 0) {
+        return {
+            text: `${supportTicketStats.value.solved || 0} solved`,
+            color: 'bg-emerald-600 text-white',
+        };
+    }
+    return undefined;
+});
+
+const myTicketBadge = computed(() => {
+    if (!userTicketStats.value) return undefined;
+    const active = userTicketStats.value.activeCount || 0;
+    if (active > 0) {
+        return {
+            text: `${active}`,
+            color: 'bg-primary text-white',
+        };
+    }
+    return undefined;
+});
 
 const menuItems = computed<MenuItem[]>(() => {
     return [
@@ -94,6 +129,12 @@ const menuItems = computed<MenuItem[]>(() => {
             candidateOnly: true,
         },
         {
+            title: 'My Tickets',
+            icon: ChatNotificationIcon,
+            route: route('app_my_tickets'),
+            badge: myTicketBadge.value,
+        },
+        {
             title: 'Account Settings',
             icon: Settings01Icon,
             route: route('app_profile_settings'),
@@ -104,6 +145,13 @@ const menuItems = computed<MenuItem[]>(() => {
             icon: UserMultiple02Icon,
             route: route('app_admin_users'),
             adminOnly: true,
+        },
+        {
+            title: 'Support Tickets',
+            icon: ChatNotificationIcon,
+            route: route('app_admin_support_tickets'),
+            adminOnly: true,
+            badge: ticketBadge.value,
         },
     ].filter(item => {
         if (item.candidateOnly) {
@@ -218,7 +266,7 @@ const toggleMobileMenu = () => {
                             <template v-else>
                                 <ul>
                                     <li class="nav-item">
-                                        <TextLink :href="item.route" class="group" :class="{ active: isActive(item), }"
+                                        <TextLink :href="item.route" class="group flex items-center justify-between" :class="{ active: isActive(item), }"
                                             @click="toggleMobileMenu">
                                             <div class="flex items-center">
                                                 <HugeiconsIcon :icon="item.icon" :size="24" color="currentColor"
@@ -229,6 +277,9 @@ const toggleMobileMenu = () => {
                                                     {{ __(item.title) }}
                                                 </span>
                                             </div>
+                                            <span v-if="item.badge" class="badge rounded-full px-2 py-0.5 text-[10px] font-bold shrink-0" :class="item.badge.color || 'bg-primary text-white'">
+                                                {{ item.badge.text }}
+                                            </span>
                                         </TextLink>
                                     </li>
                                 </ul>
