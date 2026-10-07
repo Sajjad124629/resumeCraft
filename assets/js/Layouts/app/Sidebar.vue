@@ -62,6 +62,7 @@ interface MenuItem {
     roles?: string[];
     adminOnly?: boolean;
     candidateOnly?: boolean;
+    nonAdminOnly?: boolean;
     badge?: { text: string; color?: string };
 }
 
@@ -133,6 +134,7 @@ const menuItems = computed<MenuItem[]>(() => {
             icon: ChatNotificationIcon,
             route: route('app_my_tickets'),
             badge: myTicketBadge.value,
+            nonAdminOnly: true,
         },
         {
             title: 'Account Settings',
@@ -154,15 +156,18 @@ const menuItems = computed<MenuItem[]>(() => {
             badge: ticketBadge.value,
         },
     ].filter(item => {
+        const userRoles = page.props.auth?.user?.roles || [];
+        if (item.nonAdminOnly && userRoles.includes('ROLE_ADMIN')) {
+            return false;
+        }
         if (item.candidateOnly) {
-            const userRoles = page.props.auth?.user?.roles || [];
             if (userRoles.includes('ROLE_ADMIN') || userRoles.includes('ROLE_RECRUITER')) {
                 return false;
             }
             return !!(page.props.auth as any)?.user?.candidateProfileId;
         }
         if (item.adminOnly) {
-            return (page.props.auth?.user?.roles || []).includes('ROLE_ADMIN');
+            return userRoles.includes('ROLE_ADMIN');
         }
         return !item.roles || item.roles.some(r => hasRole(r));
     });
